@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>org.dropProject</groupId>
-	<artifactId>drop-project</artifactId>
+	<artifactId>drop-project-tfc</artifactId>
 	<version>0.9.6</version>
 	<packaging>war</packaging>
 
@@ -238,7 +238,7 @@
 	</pluginRepositories>
 
 	<build>
-		<finalName>drop-project</finalName>
+		<finalName>drop-project-tfc</finalName>
 		<sourceDirectory>${project.basedir}/src/main/kotlin</sourceDirectory>
 		<testSourceDirectory>${project.basedir}/src/test/kotlin</testSourceDirectory>
 		<plugins>
