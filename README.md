@@ -9,6 +9,8 @@
 
 [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/drop-project-edu/drop-project)
 
+Heroku link: https://drop-project-tfc.herokuapp.com/
+
 A web application where students drop their projects to check for correctness and quality.
 
 Several checks are performed on each project:
