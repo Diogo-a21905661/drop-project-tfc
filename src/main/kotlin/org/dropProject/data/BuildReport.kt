@@ -221,6 +221,36 @@ data class BuildReport(val mavenOutputLines: List<String>,
                     return emptyList()
                 }
             }
+
+            //NEW: Added verifier for ANDROID language build in function (same as KOTLIN)
+            Language.ANDROID -> {
+                var startIdx = -1;
+                var endIdx = -1;
+                for ((idx, mavenOutputLine) in mavenOutputLines.withIndex()) {
+                    if (mavenOutputLine.startsWith("[INFO] --- detekt-maven-plugin")) {
+                        startIdx = idx + 1
+                    }
+                    // depending on the detekt-maven-plugin version, the output is different
+                    if (startIdx > 0 &&
+                            idx > startIdx + 1 &&
+                            (mavenOutputLine.startsWith("detekt finished") || mavenOutputLine.startsWith("[INFO]"))) {
+                        endIdx = idx
+                        break
+                    }
+                }
+
+                if (startIdx > 0) {
+                    return mavenOutputLines
+                            .subList(startIdx, endIdx)
+                            .filter { it.startsWith("\t") && !it.startsWith("\t-") }
+                            .map { it.replace("\t", "") }
+                            .map { it.replace("${mavenizedProjectFolder}/src/main/${folder}/", "") }
+                            .map { translateDetektError(it) }
+                            .distinct()
+                } else {
+                    return emptyList()
+                }
+            }
         }
     }
 
@@ -236,6 +266,16 @@ data class BuildReport(val mavenOutputLines: List<String>,
                 return false
             }
             Language.KOTLIN -> {
+                for (mavenOutputLine in mavenOutputLines) {
+                    if (mavenOutputLine.startsWith("[INFO] --- detekt-maven-plugin")) {
+                        return true
+                    }
+                }
+
+                return false
+            }
+            //NEW: Added the case for ANDROID language (same as the KOTLIN variant)
+             Language.ANDROID -> {
                 for (mavenOutputLine in mavenOutputLines) {
                     if (mavenOutputLine.startsWith("[INFO] --- detekt-maven-plugin")) {
                         return true
