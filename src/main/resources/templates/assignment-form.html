@@ -60,12 +60,26 @@
                     with each submission before building and running tests.</p>
             </div>
         </div>
+
+        <div class="form-group" th:classappend="${#fields.hasErrors('compiler')} ? 'has-error' : ''">
+            <label for="compiler" class="col-sm-3 control-label">Compiler</label>
+            <div class="col-sm-9">
+                <select th:field="*{compiler}" class="form-control" id="compiler">
+                    <option value="MAVEN" th:selected="${assignmentForm.compiler=='MAVEN'}">Maven</option>
+                    <option value="GRADLE" th:selected="${assignmentForm.compiler=='GRADLE'}">Gradle</option>
+                </select>
+                <p class="help-block" th:if="${#fields.hasErrors('compiler')}" th:errors="*{Compiler}">Error</p>
+                <p class="help-block" th:if="${!#fields.hasErrors('compiler')}" >Submissions will be compiled using this compiler</p>
+            </div>
+        </div>
+
         <div class="form-group" th:classappend="${#fields.hasErrors('language')} ? 'has-error' : ''">
             <label for="language" class="col-sm-3 control-label">Programming Language</label>
             <div class="col-sm-9">
                 <select th:field="*{language}" class="form-control" id="language">
                     <option value="JAVA" th:selected="${assignmentForm.language=='JAVA'}">Java</option>
                     <option value="KOTLIN" th:selected="${assignmentForm.language=='KOTLIN'}">Kotlin</option>
+                    <option value="ANDROID" th:selected="${assignmentForm.language=='ANDROID'}">Android</option>
                 </select>
                 <p class="help-block" th:if="${#fields.hasErrors('language')}" th:errors="*{language}">Error</p>
                 <p class="help-block" th:if="${!#fields.hasErrors('language')}" >Submissions must be implemented using this language</p>
