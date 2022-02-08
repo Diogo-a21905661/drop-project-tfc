@@ -405,6 +405,7 @@ class UploadController(
             erros.add("O projecto não contém uma pasta 'src/${packageName}'")
         }
 
+        //Android files are also in Kotlin so we only need to check with JAVA
         val mainFile = if (assignment.language == Language.JAVA) "Main.java" else "Main.kt"
         if (!File(projectFolder, "src/${packageName}/${mainFile}").existsCaseSensitive()) {
             erros.add("O projecto não contém o ficheiro ${mainFile} na pasta 'src/${packageName}'")
@@ -437,6 +438,7 @@ class UploadController(
 
         mavenizedProjectFolder.deleteRecursively()
 
+        //Android files are also in Kotlin so we only need to check with JAVA
         val folder = if (assignment.language == Language.JAVA) "java" else "kotlin"
 
         // first copy the project files submitted by the students

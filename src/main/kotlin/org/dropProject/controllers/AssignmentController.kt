@@ -291,6 +291,7 @@ class AssignmentController(
      * @param assignmentForm, the AssignmentForm from which the Assignment contents will be copied
      * @param principal is a [Principal] representing the user making the request
      * @return the created Assignment
+     * NEW: Added [Compiler] onto the function of creating assignment form
      */
     private fun createAssignmentBasedOnForm(assignmentForm: AssignmentForm, principal: Principal): Assignment {
         val newAssignment = Assignment(id = assignmentForm.assignmentId!!, name = assignmentForm.assignmentName!!,
@@ -400,6 +401,7 @@ class AssignmentController(
      * @param assignment is the Assignment with the information to place in the form
      * @param acl is a List of [AssignmentACL], containing the user's that have access to the repository
      * @return The created AssignmentForm
+     * NEW: Added [Compiler] onto the function of creating assignment form
      */
     private fun createAssignmentFormBasedOnAssignment(assignment: Assignment, acl: List<AssignmentACL>): AssignmentForm {
         val assignmentForm = AssignmentForm(assignmentId = assignment.id,

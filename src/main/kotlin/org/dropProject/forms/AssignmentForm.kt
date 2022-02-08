@@ -19,6 +19,7 @@
  */
 package org.dropProject.forms
 
+import org.dropProject.dao.Compiler
 import org.dropProject.dao.Language
 import org.dropProject.dao.LeaderboardType
 import org.dropProject.dao.TestVisibility
@@ -48,6 +49,10 @@ data class AssignmentForm(
         var assignmentTags: String? = null,  // comma separated list. e.g. "project,18/19"
 
         var assignmentPackage: String? = null,
+
+        //NEW: Added compiler for the new DP iteration
+        @field:NotNull(message = "Error: Compiler must not be empty")
+        var compiler: Compiler? = null,
 
         @field:NotNull(message = "Error: Language must not be empty")
         var language: Language? = null,
