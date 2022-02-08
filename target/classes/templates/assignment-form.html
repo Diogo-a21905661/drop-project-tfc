@@ -60,17 +60,6 @@
                     with each submission before building and running tests.</p>
             </div>
         </div>
-        <div class="form-group" th:classappend="${#fields.hasErrors('compiler')} ? 'has-error' : ''">
-            <label for="compiler" class="col-sm-3 control-label">Compiler</label>
-            <div class="col-sm-9">
-                <select th:field="*{compiler}" class="form-control" id="compiler">
-                    <option value="MAVEN" th:selected="${assignmentForm.compiler=='MAVEN'}">Maven</option>
-                    <option value="GRADLE" th:selected="${assignmentForm.compiler=='GRADLE'}">Gradle</option>
-                </select>
-                <p class="help-block" th:if="${#fields.hasErrors('compiler')}" th:errors="*{compiler}">Error</p>
-                <p class="help-block" th:if="${!#fields.hasErrors('compiler')}" >Submissions will be compiled using this compiler</p>
-            </div>
-        </div>
         <div class="form-group" th:classappend="${#fields.hasErrors('language')} ? 'has-error' : ''">
             <label for="language" class="col-sm-3 control-label">Programming Language</label>
             <div class="col-sm-9">
