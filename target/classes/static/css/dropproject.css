@@ -1,0 +1,89 @@
+.read-row {
+    margin-top: 7px;
+}
+
+.dropzone {
+    border: 2px dashed #0087F7;
+    border-radius: 5px;
+    background: white;
+    min-height: 100px;
+}
+
+body {
+    /* Margin bottom by footer height */
+    margin-bottom: 70px;
+}
+
+/* https://codepen.io/Mestika/pen/XmvVmx */
+.spinner {
+    display: inline-block;
+    opacity: 0;
+    max-width: 0;
+    -webkit-transition: opacity 0.25s, max-width 0.45s;
+    -moz-transition: opacity 0.25s, max-width 0.45s;
+    -o-transition: opacity 0.25s, max-width 0.45s;
+    transition: opacity 0.25s, max-width 0.45s;
+    /* Duration fixed since we animate additional hidden width */
+}
+
+.has-spinner.active {
+    cursor: progress;
+}
+
+.has-spinner.active .spinner {
+    opacity: 1;
+    max-width: 50px;
+    /* More than it will ever come, notice that this affects on animation duration */
+}
+
+.text-disabled {
+    color: rgba(0,0,0,0.3);
+}
+
+/* wrap text in pre elements */
+pre {
+    white-space: pre-wrap;
+}
+
+/* override defalt behaviour for tagsinput */
+.bootstrap-tagsinput {
+    width: 100%;
+}
+
+.space-between .label {
+    margin-right: 4px;
+}
+
+.badge-test-count-public {
+    font-size: 10px;
+    padding: 3px 5px;
+    display: inline-block;
+    min-width: 10px;
+    font-weight: 700;
+    line-height: 1;
+    color: #fff;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: middle;
+    background-color: #337ab7;
+    border-radius: 10px;
+}
+
+.badge-test-count-hidden {
+    font-size: 10px;
+    padding: 3px 5px;
+    display: inline-block;
+    min-width: 10px;
+    font-weight: 700;
+    line-height: 1;
+    color: #fff;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: middle;
+    background-color: #646363;
+    border-radius: 10px;
+}
+
+.fixed-width {
+    table-layout: fixed;
+}
