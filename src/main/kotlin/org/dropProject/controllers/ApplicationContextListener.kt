@@ -120,7 +120,8 @@ class ApplicationContextListener(val assignmentRepository: AssignmentRepository,
         }
         LOG.info("*************************************************")
 
-        // It it's a fresh instance, create two initial assignments (one in Java and the other in Kotlin) just to play
+        //TODO: Have to add a sample Android assignment to my github
+        // It it's a fresh instance, create three initial assignments (one in Java, one in Kotlin and one in Android) just to play
         val assignments = assignmentRepository.findAll()
         if (assignments.size == 0) {
             createAndPopulateSampleJavaAssignment()
@@ -246,6 +247,8 @@ class ApplicationContextListener(val assignmentRepository: AssignmentRepository,
             LOG.error("Error cloning ${gitRepository} - ${e}")
         }
     }
+
+    //TODO: Have to add new function around creating a sample Android assignment
 
     /**
      * This is an auxiliary function to create fake submissions to place in the "in-memory" database.

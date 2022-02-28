@@ -1,11 +1,9 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 
-<head th:replace="layout/layout :: head (pageTitle='Drop Project - Create new assignment')">
-</head>
+<head th:replace="layout/layout :: head (pageTitle='Drop Project - Create new assignment')"></head>
 
 <body>
-
 <div th:replace="layout/layout :: header"></div>
 
 <div class="container" style="max-width: 760px; margin-bottom: 65px">
@@ -60,32 +58,7 @@
                     with each submission before building and running tests.</p>
             </div>
         </div>
-        
-        <div class="form-group" th:classappend="${#fields.hasErrors('compiler')} ? 'has-error' : ''">
-            <label for="compiler" class="col-sm-3 control-label">Compiler</label>
-            <div class="col-sm-9">
-                <select th:field="*{compiler}" class="form-control" id="compiler">
-                    <option value="MAVEN" th:selected="${assignmentForm.compiler=='MAVEN'}">Maven</option>
-                    <option value="GRADLE" th:selected="${assignmentForm.compiler=='GRADLE'}">Gradle</option>
-                </select>
-                <p class="help-block" th:if="${#fields.hasErrors('compiler')}" th:errors="*{Compiler}">Error</p>
-                <p class="help-block" th:if="${!#fields.hasErrors('compiler')}" >Submissions will be compiled using this compiler. The "Android" language can only be compiled using the Gradle compiler</p>
-            </div>
-        </div>
 
-        {% if compiler == "MAVEN" %}
-        <div class="form-group" th:classappend="${#fields.hasErrors('language')} ? 'has-error' : ''">
-            <label for="language" class="col-sm-3 control-label">Programming Language</label>
-            <div class="col-sm-9">
-                <select th:field="*{language}" class="form-control" id="language">
-                    <option value="JAVA" th:selected="${assignmentForm.language=='JAVA'}">Java</option>
-                    <option value="KOTLIN" th:selected="${assignmentForm.language=='KOTLIN'}">Kotlin</option>
-                </select>
-                <p class="help-block" th:if="${#fields.hasErrors('language')}" th:errors="*{language}">Error</p>
-                <p class="help-block" th:if="${!#fields.hasErrors('language')}" >Submissions must be implemented using this language</p>
-            </div>
-        </div>
-        {% else %}
         <div class="form-group" th:classappend="${#fields.hasErrors('language')} ? 'has-error' : ''">
             <label for="language" class="col-sm-3 control-label">Programming Language</label>
             <div class="col-sm-9">
@@ -98,7 +71,6 @@
                 <p class="help-block" th:if="${!#fields.hasErrors('language')}" >Submissions must be implemented using this language</p>
             </div>
         </div>
-        {% endif %}
 
         <div class="form-group" th:classappend="${#fields.hasErrors('submissionMethod')} ? 'has-error' : ''">
             <label for="submissionMethod" class="col-sm-3 control-label">Submission Method</label>
@@ -252,6 +224,18 @@
         }
     });
     /*]]>*/
+
+    //NEW: Added interval to check which form we are seeing depending on compiler
+    //NEW: Removed the compiler form as i wasnt sure if it was the best idea
+    //Now, it will use the compiler depending on which language the user picks
+    //Maven, if its Kotlin or Java, and Gradle, if its Android
+    /*
+    window.setInterval( function(){
+        if (compiler == "MAVEN") {
+            element.classList.add("show-form")
+        }
+    },10)
+    */
 </script>
 
 </body>

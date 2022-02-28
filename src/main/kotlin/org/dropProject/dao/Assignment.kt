@@ -117,6 +117,7 @@ data class Assignment(
 
         /**
         * NEW: Changed variables of new Drop Project implementation
+        * Might remove compiler depending if language works without it
         */
         @Column(nullable = false)
         var compiler: Compiler = Compiler.MAVEN,
