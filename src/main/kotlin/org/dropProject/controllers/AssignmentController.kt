@@ -404,6 +404,7 @@ class AssignmentController(
      * NEW: Added [Compiler] onto the function of creating assignment form
      */
     private fun createAssignmentFormBasedOnAssignment(assignment: Assignment, acl: List<AssignmentACL>): AssignmentForm {
+        //NEW: Added compiler variable to assignment form
         val assignmentForm = AssignmentForm(assignmentId = assignment.id,
                 assignmentName = assignment.name,
                 assignmentTags = assignment.tagsStr?.joinToString(),
@@ -422,6 +423,11 @@ class AssignmentController(
                 maxMemoryMb = assignment.maxMemoryMb,
                 leaderboardType = assignment.leaderboardType
         )
+
+        //NEW: Check if maven is being used to build the android language, which should not be done
+        if (assignmentForm.compiler == Compiler.MAVEN && assignmentForm.language == Language.ANDROID) {
+            throw IllegalArgumentException("Maven cannot be used to compile the Android programming language")
+        }
 
         val assignees = assigneeRepository.findByAssignmentIdOrderByAuthorUserId(assignment.id)
         if (!assignees.isEmpty()) {
