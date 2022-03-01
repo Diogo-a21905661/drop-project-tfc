@@ -59,6 +59,18 @@
             </div>
         </div>
 
+        <div class="form-group" th:classappend="${#fields.hasErrors('compiler')} ? 'has-error' : ''">
+            <label for="compiler" class="col-sm-3 control-label">Compiler</label>
+            <div class="col-sm-9">
+                <select th:field="*{compiler}" class="form-control" id="compiler">
+                    <option value="MAVEN" th:selected="${assignmentForm.compiler=='MAVEN'}">Maven</option>
+                    <option value="GRADLE" th:selected="${assignmentForm.compiler=='GRADLE'}">Gradle</option>
+                </select>
+                <p class="help-block" th:if="${#fields.hasErrors('compiler')}" th:errors="*{compiler}">Error</p>
+                <p class="help-block" th:if="${!#fields.hasErrors('compiler')}" >Submissions will be built/deployed using the chosen compiler</p>
+            </div>
+        </div>
+
         <div class="form-group" th:classappend="${#fields.hasErrors('language')} ? 'has-error' : ''">
             <label for="language" class="col-sm-3 control-label">Programming Language</label>
             <div class="col-sm-9">
@@ -224,18 +236,6 @@
         }
     });
     /*]]>*/
-
-    //NEW: Added interval to check which form we are seeing depending on compiler
-    //NEW: Removed the compiler form as i wasnt sure if it was the best idea
-    //Now, it will use the compiler depending on which language the user picks
-    //Maven, if its Kotlin or Java, and Gradle, if its Android
-    /*
-    window.setInterval( function(){
-        if (compiler == "MAVEN") {
-            element.classList.add("show-form")
-        }
-    },10)
-    */
 </script>
 
 </body>

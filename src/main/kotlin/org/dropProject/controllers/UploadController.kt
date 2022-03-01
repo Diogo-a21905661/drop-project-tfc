@@ -375,20 +375,25 @@ class UploadController(
             submissionReportRepository.save(SubmissionReport(submissionId = submission.id,
                     reportKey = Indicator.PROJECT_STRUCTURE.code, reportValue = "OK"))
 
-            val mavenizedProjectFolder = mavenize(projectFolder, submission, assignment, teacherRebuild)
-            LOG.info("[${authorsStr}] Mavenized to folder ${mavenizedProjectFolder}")
+            //NEW: Added if conditional for language to decide if maven or gradle compiler is used
+            if (assignment.compiler == Compiler.MAVEN) {
+                val mavenizedProjectFolder = mavenize(projectFolder, submission, assignment, teacherRebuild)
+                LOG.info("[${authorsStr}] Mavenized to folder ${mavenizedProjectFolder}")
 
-            if (asyncExecutor is ThreadPoolTaskScheduler) {
-                LOG.info("asyncExecutor.activeCount = ${asyncExecutor.activeCount}")
+                if (asyncExecutor is ThreadPoolTaskScheduler) {
+                    LOG.info("asyncExecutor.activeCount = ${asyncExecutor.activeCount}")
+                }
+
+                if (teacherRebuild) {
+                    submission.setStatus(SubmissionStatus.REBUILDING, dontUpdateStatusDate = true)
+                    submissionRepository.save(submission)
+                }
+
+                buildWorker.checkProject(mavenizedProjectFolder, authorsStr, submission, rebuildByTeacher = teacherRebuild,
+                principalName = principal?.name)
+            } else {
+                
             }
-
-            if (teacherRebuild) {
-                submission.setStatus(SubmissionStatus.REBUILDING, dontUpdateStatusDate = true)
-                submissionRepository.save(submission)
-            }
-
-            buildWorker.checkProject(mavenizedProjectFolder, authorsStr, submission, rebuildByTeacher = teacherRebuild,
-            principalName = principal?.name)
         }
     }
 
