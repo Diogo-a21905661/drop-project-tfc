@@ -19,8 +19,7 @@
  */
 package org.dropProject.forms
 
-import org.dropProject.dao.Compiler
-import org.dropProject.dao.Language
+import org.dropProject.dao.Assignment
 import org.dropProject.dao.LeaderboardType
 import org.dropProject.dao.TestVisibility
 import org.springframework.format.annotation.DateTimeFormat
