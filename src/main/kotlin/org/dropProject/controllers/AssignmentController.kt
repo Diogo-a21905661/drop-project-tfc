@@ -439,6 +439,7 @@ class AssignmentController(
             val otherTeachersStr = acl.map { it -> it.userId }.joinToString(",\n")
             assignmentForm.acl = otherTeachersStr
         }
+        
         return assignmentForm
     }
 
