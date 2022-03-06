@@ -58,11 +58,6 @@ data class AssignmentForm(
         @field:NotNull(message = "Error: Language must not be empty")
         var language: Language? = null,
 
-        //NEW: Added error so that it cant be Maven and Android at the same time
-        if (compiler == Compiler.MAVEN && language == Language.ANDROID) {
-            @field:equals(value=Language.ANDROID, message = "Error: Maven cannot be used to initialize the Android language")
-        }
-
         @field:DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
         var dueDate: LocalDateTime? = null,
 
