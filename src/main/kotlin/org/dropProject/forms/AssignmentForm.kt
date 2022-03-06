@@ -20,6 +20,8 @@
 package org.dropProject.forms
 
 import org.dropProject.dao.Assignment
+import org.dropProject.dao.Language
+import org.dropProject.dao.Compiler
 import org.dropProject.dao.LeaderboardType
 import org.dropProject.dao.TestVisibility
 import org.springframework.format.annotation.DateTimeFormat
@@ -58,7 +60,7 @@ data class AssignmentForm(
 
         //NEW: Added error so that it cant be Maven and Android at the same time
         if (compiler == Compiler.MAVEN && language == Language.ANDROID) {
-            @field:(message = "Error: Maven cannot be used to initialize the Android language")
+            @field:equals(value=Language.ANDROID, message = "Error: Maven cannot be used to initialize the Android language")
         }
 
         @field:DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
