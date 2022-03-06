@@ -424,6 +424,9 @@ class AssignmentController(
                 leaderboardType = assignment.leaderboardType
         )
 
+        //NEW: Printed out the compiler and language to check if it is getting corret values
+        print("Compiler == " + assignmentForm.compiler + " and Language == " + assignmentForm.language);
+
         //NEW: Check if maven is being used to build the android language, which should not be done
         if (assignmentForm.compiler == Compiler.MAVEN && assignmentForm.language == Language.ANDROID) {
             throw IllegalArgumentException("Maven cannot be used to compile the Android programming language")
