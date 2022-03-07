@@ -136,6 +136,12 @@ class AssignmentController(
 
         var mustSetupGitConnection = false
 
+        //NEW: Check if compiler Maven is not used with Android language
+        if (assignmentForm.language == Language.ANDROID && assignmentForm.compiler == Compiler.MAVEN) {
+            LOG.warn("Error: Compiler Maven cannot be used with Android language")
+            return "assignment-form"
+        }
+
         if (assignmentForm.acceptsStudentTests &&
                 (assignmentForm.minStudentTests == null || assignmentForm.minStudentTests!! < 1)) {
             LOG.warn("Error: You must require at least one student test")

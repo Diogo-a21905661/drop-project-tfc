@@ -52,10 +52,10 @@ data class AssignmentForm(
         var assignmentPackage: String? = null,
 
         //NEW: Added compiler for the new DP iteration
-        @field:check(value = Compiler.MAVEN, message = "Error: Compiler must not be Maven while language is Android")
+        @field:NotNull(message="Error: Compiler must not be empty")
         var compiler: Compiler? = null,
 
-        @field:check(value = Language.ANDROID, message = "Error: Language must not be Android while compiles is Maven")
+        @field:NotNull(message="Error: Language must not be empty")
         var language: Language? = null,
 
         @field:DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
