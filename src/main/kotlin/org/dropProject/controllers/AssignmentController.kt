@@ -139,6 +139,7 @@ class AssignmentController(
         //NEW: Check if compiler Maven is not used with Android language
         if (assignmentForm.language == Language.ANDROID && assignmentForm.compiler == Compiler.MAVEN) {
             LOG.warn("Error: Compiler Maven cannot be used with Android language")
+            bindingResult.rejectValue("compiler", "compiler.check", "Error: Compiler Maven cannot be used with Android language")
             return "assignment-form"
         }
 
