@@ -136,7 +136,7 @@ class AssignmentController(
 
         var mustSetupGitConnection = false
 
-        //NEW: Check if compiler Maven is not used with Android language
+        //NEW: Check if compiler Maven is not used with Android language (FIXED!!!)
         if (assignmentForm.language == Language.ANDROID && assignmentForm.compiler == Compiler.MAVEN) {
             LOG.warn("Error: Compiler Maven cannot be used with Android language")
             bindingResult.rejectValue("compiler", "compiler.check", "Error: Compiler Maven cannot be used with Android language")
