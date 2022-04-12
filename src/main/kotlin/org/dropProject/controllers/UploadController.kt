@@ -395,11 +395,20 @@ class UploadController(
                 principalName = principal?.name)
             } else { //Compiler is gradle
                 val gradleProjectFolder = buildWithGradle(projectFolder, submission, assignment, teacherRebuild)
-                LOG.info("[${authorsStr}] used Gradle to build folder to ${mavenizedProjectFolder}")
+                LOG.info("[${authorsStr}] used Gradle to build folder to ${gradleProjectFolder}")
 
                 if (asyncExecutor is ThreadPoolTaskScheduler) {
                     LOG.info("asyncExecutor.activeCount = ${asyncExecutor.activeCount}")
                 }
+
+                //Check if build is being requested by teacher
+                if (teacherRebuild) {
+                    submission.setStatus(SubmissionStatus.REBUILDING, dontUpdateStatusDate = true)
+                    submissionRepository.save(submission)
+                }
+
+                buildWorker.checkProject(gradleProjectFolder, authorsStr, submission, rebuildByTeacher = teacherRebuild,
+                principalName = principal?.name)
             }
         }
     }
@@ -1211,5 +1220,5 @@ class UploadController(
             LOG.warn("Inexistent submission ${submissionId}")
         }
     }
-    
+
 }
