@@ -136,7 +136,7 @@ class AssignmentController(
 
         var mustSetupGitConnection = false
 
-        //NEW: Check if compiler Maven is not used with Android language (FIXED!!!)
+        //NEW: Check if compiler Maven is not used with Android language (ERROR REPLY)
         if (assignmentForm.language == Language.ANDROID && assignmentForm.compiler == Compiler.MAVEN) {
             LOG.warn("Error: Compiler Maven cannot be used with Android language")
             bindingResult.rejectValue("compiler", "compiler.check", "Error: Compiler Maven cannot be used with Android language")
@@ -190,7 +190,7 @@ class AssignmentController(
                 return "assignment-form"
             }
 
-            // check if we can connect to given git repository
+            // check if we can connect to given git repository (Not working in test, maybe needs to be public??)
             try {
                 val directory = File(assignmentsRootLocation, assignmentForm.assignmentId)
                 gitClient.clone(gitRepository, directory)

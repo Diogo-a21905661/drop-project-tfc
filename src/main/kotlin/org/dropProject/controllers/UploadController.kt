@@ -241,6 +241,7 @@ class UploadController(
 
 
     /**
+     * TODO: Added Gradle upload method next to Maven upload method (Have to check other upload methods)
      * Controller that handles requests for the actual file upload that delivers/submits the student's code.
      *
      * @param uploadForm is an [Uploadform]
@@ -330,6 +331,7 @@ class UploadController(
                 }
             }
 
+            // get submission we are going to build
             val submission = Submission(submissionId = projectFolder.name, submissionDate = Date(),
                     status = SubmissionStatus.SUBMITTED.code, statusDate = Date(), assignmentId = assignment.id,
                     submitterUserId = principal.realName(),
@@ -376,44 +378,31 @@ class UploadController(
             submissionReportRepository.save(SubmissionReport(submissionId = submission.id,
                     reportKey = Indicator.PROJECT_STRUCTURE.code, reportValue = "OK"))
 
-            //NEW: Added if conditional for compiler to decide if maven or gradle compiler is used
-            if (assignment.compiler == Compiler.MAVEN) {
-                val mavenizedProjectFolder = mavenize(projectFolder, submission, assignment, teacherRebuild)
-                LOG.info("[${authorsStr}] Mavenized to folder ${mavenizedProjectFolder}")
-
-                if (asyncExecutor is ThreadPoolTaskScheduler) {
-                    LOG.info("asyncExecutor.activeCount = ${asyncExecutor.activeCount}")
-                }
-
-                //Check if build is being requested by teacher
-                if (teacherRebuild) {
-                    submission.setStatus(SubmissionStatus.REBUILDING, dontUpdateStatusDate = true)
-                    submissionRepository.save(submission)
-                }
-
-                buildWorker.checkProject(mavenizedProjectFolder, authorsStr, submission, rebuildByTeacher = teacherRebuild,
-                principalName = principal?.name)
-            } else { //Compiler is gradle
-                val gradleProjectFolder = buildWithGradle(projectFolder, submission, assignment, teacherRebuild)
-                LOG.info("[${authorsStr}] used Gradle to build folder to ${gradleProjectFolder}")
-
-                if (asyncExecutor is ThreadPoolTaskScheduler) {
-                    LOG.info("asyncExecutor.activeCount = ${asyncExecutor.activeCount}")
-                }
-
-                //Check if build is being requested by teacher
-                if (teacherRebuild) {
-                    submission.setStatus(SubmissionStatus.REBUILDING, dontUpdateStatusDate = true)
-                    submissionRepository.save(submission)
-                }
-
-                buildWorker.checkProject(gradleProjectFolder, authorsStr, submission, rebuildByTeacher = teacherRebuild,
-                principalName = principal?.name)
+            val standardizedProjectFolder = standardizeFolder(projectFolder, submission, assignment, teacherRebuild)
+           
+            //NEW: Check if Maven or Gradle is used for LOG info
+            if (assignment.Compiler == MAVEN) {
+                LOG.info("[${authorsStr}] Mavenized to folder ${standardizedProjectFolder}")
+            } else {
+                LOG.info("[${authorsStr}] used gradle to folder ${standardizedProjectFolder}")
             }
+
+            if (asyncExecutor is ThreadPoolTaskScheduler) {
+                LOG.info("asyncExecutor.activeCount = ${asyncExecutor.activeCount}")
+            }
+
+            //Check if build is being requested by teacher
+            if (teacherRebuild) {
+                submission.setStatus(SubmissionStatus.REBUILDING, dontUpdateStatusDate = true)
+                submissionRepository.save(submission)
+            }
+
+            buildWorker.checkProject(standardizedProjectFolder, authorsStr, submission, rebuildByTeacher = teacherRebuild,
+            principalName = principal?.name)
         }
     }
 
-    //Check project structure functions the same with gradle and maven projects
+    //Check project structure (functions the same with gradle and maven projects)
     private fun checkProjectStructure(projectFolder: File, assignment: Assignment): List<String> {
         val erros = ArrayList<String>()
         if (!File(projectFolder, "src").existsCaseSensitive()) {
@@ -447,46 +436,47 @@ class UploadController(
     }
 
     /**
-     * Transforms a student's submission/code from its original structure to a structure that respects Maven's
+     * NEW: Removed previous 
+     * Transforms a student's submission/code from its original structure to a structure that respects the standard for the compiler (Maven or Gradle)
      * expected format.
      * @param projectFolder is a file
      * @param submission is a Submission
      * @param teacherRebuild is a Boolean
      * @return File
      */
-    private fun mavenize(projectFolder: File, submission: Submission, assignment: Assignment, teacherRebuild: Boolean = false): File {
-        val mavenizedProjectFolder = assignmentTeacherFiles.getProjectFolderAsFile(submission, teacherRebuild)
+    private fun standardizeFolder(projectFolder: File, submission: Submission, assignment: Assignment, teacherRebuild: Boolean = false): File {
+        val newProjectFolder = assignmentTeacherFiles.getProjectFolderAsFile(submission, teacherRebuild)
 
-        mavenizedProjectFolder.deleteRecursively()
+        newProjectFolder.deleteRecursively()
 
         //NEW: Android files are in Kotlin so we start by checking with JAVA
         val folder = if (assignment.language == Language.JAVA) "java" else "kotlin"
 
         // first copy the project files submitted by the students
-        FileUtils.copyDirectory(File(projectFolder, "src"), File(mavenizedProjectFolder, "src/main/${folder}")) {
+        FileUtils.copyDirectory(File(projectFolder, "src"), File(newProjectFolder, "src/main/${folder}")) {
             it.isDirectory || (it.isFile() && !it.name.startsWith("Test")) // exclude TestXXX classes
         }
         if (assignment.acceptsStudentTests) {
-            FileUtils.copyDirectory(File(projectFolder, "src"), File(mavenizedProjectFolder, "src/test/${folder}")) {
+            FileUtils.copyDirectory(File(projectFolder, "src"), File(newProjectFolder, "src/test/${folder}")) {
                 it.isDirectory || (it.isFile() && it.name.startsWith("Test")) // include TestXXX classes
             }
         }
 
         val testFilesFolder = File(projectFolder, "test-files")
         if (testFilesFolder.exists()) {
-            FileUtils.copyDirectory(File(projectFolder, "test-files"), File(mavenizedProjectFolder, "test-files"))
+            FileUtils.copyDirectory(File(projectFolder, "test-files"), File(newProjectFolder, "test-files"))
         }
-        FileUtils.copyFile(File(projectFolder, "AUTHORS.txt"),File(mavenizedProjectFolder, "AUTHORS.txt"))
+        FileUtils.copyFile(File(projectFolder, "AUTHORS.txt"),File(newProjectFolder, "AUTHORS.txt"))
         if (submission.gitSubmissionId == null && deleteOriginalProjectFolder) {  // don't delete git submissions
             FileUtils.deleteDirectory(projectFolder)  // TODO: This seems duplicate with the lines below...
         }
 
         // next, copy the project files submitted by the teachers (will override eventually the student files)
-        assignmentTeacherFiles.copyTeacherFilesTo(assignment, mavenizedProjectFolder)
+        assignmentTeacherFiles.copyTeacherFilesTo(assignment, newProjectFolder)
 
         // if the students have a README file, copy it over the teacher's README
         if (File(projectFolder, "README.md").exists()) {
-            FileUtils.copyFile(File(projectFolder, "README.md"), File(mavenizedProjectFolder, "README.md"))
+            FileUtils.copyFile(File(projectFolder, "README.md"), File(newProjectFolder, "README.md"))
         }
 
         // finally remove the original project folder (the zip file is still kept)
@@ -497,68 +487,10 @@ class UploadController(
             projectFolder.deleteRecursively()
         }
 
-        return mavenizedProjectFolder
+        return newProjectFolder
     }
 
-    /**
-     * NEW: Added this function to build projects using gradle (Not sure if needed as files are respected equally in both)
-     * Transforms a student's submission/code from its original structure to a structure that respects Gradle's
-     * expected format.
-     * @param projectFolder is a file
-     * @param submission is a Submission
-     * @param teacherRebuild is a Boolean
-     * @return File
-     */
-    private fun buildWithGradle(projectFolder: File, submission: Submission, assignment: Assignment, teacherRebuild: Boolean = false): File {
-        val gradleProjectFolder = assignmentTeacherFiles.getProjectFolderAsFile(submission, teacherRebuild)
-
-        gradleProjectFolder.deleteRecursively()
-
-        //NEW: Android files are also in Kotlin so we only need to check with JAVA
-        val folder = if (assignment.language == Language.JAVA) "java" else "kotlin"
-
-        // first copy the project files submitted by the students
-        FileUtils.copyDirectory(File(projectFolder, "src"), File(gradleProjectFolder, "src/main/${folder}")) {
-            it.isDirectory || (it.isFile() && !it.name.startsWith("Test")) // exclude TestXXX classes
-        }
-        // check if assignment accepts student tests and make it work with tests
-        if (assignment.acceptsStudentTests) {
-            FileUtils.copyDirectory(File(projectFolder, "src"), File(gradleProjectFolder, "src/test/${folder}")) {
-                it.isDirectory || (it.isFile() && it.name.startsWith("Test")) // include TestXXX classes
-            }
-        }
-
-        // if test files exist copy into folder
-        val testFilesFolder = File(projectFolder, "test-files")
-        if (testFilesFolder.exists()) {
-            FileUtils.copyDirectory(File(projectFolder, "test-files"), File(gradleProjectFolder, "test-files"))
-        }
-        // copy authors file into folder
-        FileUtils.copyFile(File(projectFolder, "AUTHORS.txt"),File(gradleProjectFolder, "AUTHORS.txt"))
-        if (submission.gitSubmissionId == null && deleteOriginalProjectFolder) {  // don't delete git submissions
-            FileUtils.deleteDirectory(projectFolder)  // TODO: This seems duplicate with the lines below...
-        }
-
-        // next, copy the project files submitted by the teachers (will override eventually the student files)
-        assignmentTeacherFiles.copyTeacherFilesTo(assignment, gradleProjectFolder)
-
-        // if the students have a README file, copy it over the teacher's README
-        if (File(projectFolder, "README.md").exists()) {
-            FileUtils.copyFile(File(projectFolder, "README.md"), File(gradleProjectFolder, "README.md"))
-        }
-
-        // finally remove the original project folder (the zip file is still kept)
-        if (!(assignment.id.startsWith("testJavaProj") ||
-                        assignment.id.startsWith("sample") ||
-                        assignment.id.startsWith("testKotlinProj") ||  // exclude projects used for automatic tests
-                        submission.gitSubmissionId != null)) {   // exclude git submissions
-            projectFolder.deleteRecursively()
-        }
-
-        return gradleProjectFolder
-    }
-
-    //Check if project authors is correctly formatted, not needed to change depending on maven or gradle
+    //Check if project authors is correctly formatted (not needed to change depending on Maven or Gradle)
     private fun getProjectAuthors(projectFolder: File) : List<AuthorDetails> {
         // check for AUTHORS.txt file
         val authorsFile = File(projectFolder, "AUTHORS.txt")
@@ -628,8 +560,8 @@ class UploadController(
 
         LOG.info("Rebuilding ${submissionId}")
 
-        val submission = submissionRepository.findById(submissionId).orElse(null)
-        val mavenizedProjectFolder = assignmentTeacherFiles.getProjectFolderAsFile(submission, wasRebuilt = false)
+        val submission = submissionRepository.findById(submissionId).orElse(null) // get project by id
+        val oldProjectFolder = assignmentTeacherFiles.getProjectFolderAsFile(submission, wasRebuilt = false) // get project as file folder
 
         // TODO: This should go into submission
         var authors = ArrayList<AuthorDetails>()
@@ -641,7 +573,7 @@ class UploadController(
         submission.setStatus(SubmissionStatus.REBUILDING, dontUpdateStatusDate = true)
         submissionRepository.save(submission)
 
-        buildWorker.checkProject(mavenizedProjectFolder, authors.joinToString(separator = "|"), submission,
+        buildWorker.checkProject(oldProjectFolder, authors.joinToString(separator = "|"), submission,
                 dontChangeStatusDate = true,
                 principalName = principal.realName())
 
@@ -771,12 +703,12 @@ class UploadController(
         val nonFinalSubmissions = submissionRepository.findByAssignmentIdAndMarkedAsFinal(assignmentId, false)
 
         for (submission in nonFinalSubmissions) {
-            val mavenizedProjectFolder = assignmentTeacherFiles.getProjectFolderAsFile(submission,
+            val oldProjectFolder = assignmentTeacherFiles.getProjectFolderAsFile(submission,
                     submission.getStatus() == SubmissionStatus.VALIDATED_REBUILT)
-            if (mavenizedProjectFolder.deleteRecursively()) {
-                LOG.info("Removed mavenized project folder (${submission.submissionId}): ${mavenizedProjectFolder}")
+            if (oldProjectFolder.deleteRecursively()) {
+                LOG.info("Removed project folder (${submission.submissionId}): ${oldProjectFolder}")
             } else {
-                LOG.info("Error removing mavenized project folder (${submission.submissionId}): ${mavenizedProjectFolder}")
+                LOG.info("Error removing project folder (${submission.submissionId}): ${oldProjectFolder}")
             }
         }
 
