@@ -349,7 +349,7 @@ class UploadController(
 
     /**
      * Builds and tests a [Submission].
-     * NEW: Added if conditional to check if either Gradle or Maven were used
+     * NEW: Added if conditional to check if either Gradle or Maven were used as compiler
      * @property projectFolder is a File
      * @property assignment is the [Assignment] for which the submission is being made
      * @property authorsStr is a String
@@ -381,10 +381,10 @@ class UploadController(
             val standardizedProjectFolder = standardizeFolder(projectFolder, submission, assignment, teacherRebuild)
            
             //NEW: Check if Maven or Gradle is used for LOG info
-            if (assignment.Compiler == MAVEN) {
+            if (assignment.compiler == Compiler.MAVEN) {
                 LOG.info("[${authorsStr}] Mavenized to folder ${standardizedProjectFolder}")
             } else {
-                LOG.info("[${authorsStr}] used gradle to folder ${standardizedProjectFolder}")
+                LOG.info("[${authorsStr}] used Gradle to folder ${standardizedProjectFolder}")
             }
 
             if (asyncExecutor is ThreadPoolTaskScheduler) {
