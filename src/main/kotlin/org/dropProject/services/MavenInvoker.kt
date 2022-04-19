@@ -54,10 +54,10 @@ class MavenInvoker {
         securityManagerEnabled = false
     }
 
-    var showMavenOutput = false
+    var showOutput = false
 
     /**
-     * Runs and project using Maven. This function executes the compilation and testing of a submitted project.
+     * Runs the project using Maven. This function executes the compilation and testing of a submitted project.
      *
      * @param mavenizedProjectFolder is a File containing the project's files
      * @param principalName is a String

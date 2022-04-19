@@ -6,7 +6,9 @@
 
 plugins {
     java
-    `maven-publish`
+    idea
+    war
+    kotlin("jvm") version "1.6.20" //NEW: Added kotlin plugin for compile and testing
 }
 
 repositories {
@@ -15,6 +17,8 @@ repositories {
         url = uri("https://repo.maven.apache.org/maven2/")
         url = uri("https://repo.gradle.org/gradle/libs-releases") //NEW: Added gradle repository for tooling api
     }
+    mavenCentral()
+    jcenter()
 }
 
 dependencies {
@@ -40,6 +44,8 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-oauth2-client:2.5.3")
     implementation("com.thoughtworks.qdox:qdox:2.0.0")
     implementation("org.springframework.boot:spring-boot-starter-cache:2.5.3")
+    implementation("org.springframework:spring-core:4.3.2.RELEASE") //NEW: Added new Spring implementation for Gradle
+    implementation("org.springframework.amqp:spring-rabbit:1.5.2.RELEASE") //NEW: Added new Spring implementation for Gradle
     implementation("javax.cache:cache-api:1.1.1")
     implementation("org.ehcache:ehcache:3.8.1")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.12.2")

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+		 xlmns="">
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>org.dropProject</groupId>
@@ -453,6 +454,10 @@
 		<developer>
 			<name>Bruno Cipriano</name>
 			<email>bcipriano@ulusofona.pt</email>
+		</developer>
+		<developer>
+			<name>Diogo Araújo</name>
+			<email>a21905661@alunos.ulusofona.pt</email>
 		</developer>
 	</developers>
 

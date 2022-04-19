@@ -49,6 +49,7 @@ fun hasCoverageReport(mavenizedProjectFolder: File): Boolean {
 @Service
 class BuildWorker(
         val mavenInvoker: MavenInvoker,
+        val gradleInvoker: GradleInvoker,
         val assignmentRepository: AssignmentRepository,
         val submissionRepository: SubmissionRepository,
         val gitSubmissionRepository: GitSubmissionRepository,
@@ -61,10 +62,11 @@ class BuildWorker(
     val LOG = LoggerFactory.getLogger(this.javaClass.name)
 
     /**
+     * NEW: Added Gradle compiler to the build worker
      * Checks a [Submission], performing all relevant build and evalutation steps (for example, Compilation) and storing
      * each step's results in the database.
      *
-     * @param mavenizedProjectFolder is a File
+     * @param projectFolder is a File
      * @param authorsStr is a String
      * @param submission is a [Submission]
      * @param principalName is a String
@@ -73,30 +75,44 @@ class BuildWorker(
      */
     @Async
     @Transactional
-    fun checkProject(mavenizedProjectFolder: File, authorsStr: String, submission: Submission,
+    fun checkProject(projectFolder: File, authorsStr: String, submission: Submission,
                           principalName: String?, dontChangeStatusDate: Boolean = false, rebuildByTeacher: Boolean = false) {
 
         val assignment = assignmentRepository.findById(submission.assignmentId).orElse(null)
 
-        if (assignment.maxMemoryMb != null) {
-            LOG.info("[${authorsStr}] Started maven invocation (max: ${assignment.maxMemoryMb}Mb)")
-        } else {
-            LOG.info("[${authorsStr}] Started maven invocation")
+        //NEW: Added condition to check if either Maven or Gradle are used
+        val result
+        if (assignment.compiler == Compiler.MAVEN) {
+            if (assignment.maxMemoryMb != null) {
+                LOG.info("[${authorsStr}] Started maven invocation (max: ${assignment.maxMemoryMb}Mb)")
+            } else {
+                LOG.info("[${authorsStr}] Started maven invocation")
+            }
+
+            val realPrincipalName = if (rebuildByTeacher) submission.submitterUserId else principalName
+            result = mavenInvoker.run(projectFolder, realPrincipalName, assignment.maxMemoryMb)
+    
+            LOG.info("[${authorsStr}] Finished maven invocation")
+        } else { // gradle is used as compiler
+            if (assignment.maxMemoryMb != null) {
+                LOG.info("[${authorsStr}] Started gradle invocation (max: ${assignment.maxMemoryMb}Mb)")
+            } else {
+                LOG.info("[${authorsStr}] Started gradle invocation")
+            }
+
+            val realPrincipalName = if (rebuildByTeacher) submission.submitterUserId else principalName
+            result = gradleInvoker.run(projectFolder, realPrincipalName, assignment.maxMemoryMb)
         }
 
-        val realPrincipalName = if (rebuildByTeacher) submission.submitterUserId else principalName
-        val mavenResult = mavenInvoker.run(mavenizedProjectFolder, realPrincipalName, assignment.maxMemoryMb)
-
-        LOG.info("[${authorsStr}] Finished maven invocation")
-
+        // check result for errors (expired, too much output)
         when {
-            mavenResult.expiredByTimeout -> submission.setStatus(SubmissionStatus.ABORTED_BY_TIMEOUT,
+            result.expiredByTimeout -> submission.setStatus(SubmissionStatus.ABORTED_BY_TIMEOUT,
                                                                     dontUpdateStatusDate = dontChangeStatusDate)
-            mavenResult.tooMuchOutput() -> submission.setStatus(SubmissionStatus.TOO_MUCH_OUTPUT,
+            result.tooMuchOutput() -> submission.setStatus(SubmissionStatus.TOO_MUCH_OUTPUT,
                                                                     dontUpdateStatusDate = dontChangeStatusDate)
-            else -> {
-                LOG.info("[${authorsStr}] Maven invoker OK")
-                val buildReport = buildReportBuilder.build(mavenResult.outputLines, mavenizedProjectFolder.absolutePath,
+            else -> { // get build report
+                LOG.info("[${authorsStr}] Invoker OK")
+                val buildReport = buildReportBuilder.build(result.outputLines, projectFolder.absolutePath,
                         assignment, submission)
 
                 // clear previous indicators except PROJECT_STRUCTURE
@@ -162,13 +178,13 @@ class BuildWorker(
                     }
                 }
 
-
+                //TODO: Build report search for maven output? What about gradle?
                 val buildReportDB = buildReportRepository.save(org.dropProject.dao.BuildReport(
                         buildReport = buildReport.mavenOutput()))
                 submission.buildReportId = buildReportDB.id
 
                 // store the junit reports in the DB
-                File("${mavenizedProjectFolder}/target/surefire-reports")
+                File("${projectFolder}/target/surefire-reports")
                         .walkTopDown()
                         .filter { it -> it.name.endsWith(".xml") }
                         .forEach {
@@ -177,14 +193,14 @@ class BuildWorker(
                             jUnitReportRepository.save(report)
                         }
 
-
-                if (assignment.calculateStudentTestsCoverage && hasCoverageReport(mavenizedProjectFolder)) {
+                //NEW: Added verification for compiler Maven to make sure no errors happen in test coverage
+                if (assignment.compiler == Compiler.MAVEN && assignment.calculateStudentTestsCoverage && hasCoverageReport(projectFolder)) {
 
                     // this may seem stupid but I have to rename TestTeacher files to something that will make junit ignore them,
                     // then invoke maven again, so that the coverage report is based
                     // on the sole execution of the student unit tests (otherwise, it will include coverage from
                     // the teacher tests) and finally rename TestTeacher files back
-                    File("${mavenizedProjectFolder}/src/test")
+                    File("${projectFolder}/src/test")
                             .walkTopDown()
                             .filter { it -> it.name.startsWith("TestTeacher") }
                             .forEach {
@@ -194,19 +210,19 @@ class BuildWorker(
 
                     LOG.info("[${authorsStr}] Started maven invocation again (for coverage)")
 
-                    val mavenResultCoverage = mavenInvoker.run(mavenizedProjectFolder, realPrincipalName, assignment.maxMemoryMb)
+                    val mavenResultCoverage = mavenInvoker.run(projectFolder, realPrincipalName, assignment.maxMemoryMb)
                     if (!mavenResultCoverage.expiredByTimeout) {
                         LOG.info("[${authorsStr}] Finished maven invocation (for coverage)")
 
                         // check again the result of the tests
-                        val buildReportCoverage = buildReportBuilder.build(mavenResult.outputLines, mavenizedProjectFolder.absolutePath,
+                        val buildReportCoverage = buildReportBuilder.build(mavenResult.outputLines, projectFolder.absolutePath,
                                 assignment, submission)
                         if (buildReportCoverage.hasJUnitErrors(TestType.STUDENT) == true) {
                             LOG.warn("Submission ${submission.id} failed executing student tests when isolated from teacher tests")
                         } else {
-                            if (File("${mavenizedProjectFolder}/target/site/jacoco").exists()) {
+                            if (File("${projectFolder}/target/site/jacoco").exists()) {
                                 // store the jacoco reports in the DB
-                                File("${mavenizedProjectFolder}/target/site/jacoco")
+                                File("${projectFolder}/target/site/jacoco")
                                         .listFiles()
                                         .filter { it -> it.name.endsWith(".csv") }
                                         .forEach {
@@ -216,13 +232,13 @@ class BuildWorker(
                                         }
                             } else {
                                 LOG.warn("Submission ${submission.id} failed measuring coverage because the folder " +
-                                        "[${mavenizedProjectFolder}/target/site/jacoco] doesn't exist")
+                                        "[${projectFolder}/target/site/jacoco] doesn't exist")
                             }
                         }
 
                     }
 
-                    File("${mavenizedProjectFolder}/src/test")
+                    File("${projectFolder}/src/test")
                             .walkTopDown()
                             .filter { it -> it.name.endsWith(".ignore") }
                             .forEach {

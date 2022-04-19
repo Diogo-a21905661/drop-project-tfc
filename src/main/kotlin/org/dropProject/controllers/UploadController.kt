@@ -436,7 +436,7 @@ class UploadController(
     }
 
     /**
-     * NEW: Removed previous 
+     * NEW: Removed previous version to make one that works for all compilers
      * Transforms a student's submission/code from its original structure to a structure that respects the standard for the compiler (Maven or Gradle)
      * expected format.
      * @param projectFolder is a file
@@ -976,7 +976,6 @@ class UploadController(
         buildSubmission(projectFolder, assignment, gitSubmission.group.authorsStr("|"), submission, asyncExecutor, principal = principal)
 
         return ResponseEntity("{ \"submissionId\": \"${submission.id}\"}", HttpStatus.OK);
-
     }
 
     /**
