@@ -52,21 +52,6 @@ public class GradleInvoker {
 
     var showOutput = false
 
-    //Build project using Gradle while using tasks
-    fun buildProjectWithTasks(String tasks) : boolean {   
-        ProjectConnection connection = connector.connect();    
-        BuildLauncher build = connection.newBuild();    
-        build.forTasks(tasks);    
-        
-        try {        
-            build.run();    
-        } finally {       
-            connection.close();   
-        }
-
-        return true;
-    }
-
     /**
      * Runs the project using Gradle. This function executes the compilation and testing of a submitted project.
      *
@@ -101,13 +86,13 @@ public class GradleInvoker {
         }
 
         //NEW: Set connection to Gradle Connector (Tooling API)
-        connector = org.gradle.tooling.GradleConnector.newConnector();        
+        var connector = org.gradle.tooling.GradleConnector.newConnector();        
         connector.useInstallation(gradleHome);        
         connector.forProjectDirectory(new File(projectFolder));    
 
         //NEW: Compile through gradle
-        ProjectConnection connection = connector.connect();    
-        BuildLauncher build = connection.newBuild();    
+        val connection = connector.connect();    
+        val build = connection.newBuild();    
         
         //NEW: Compile depending on wether its kotlin or java
         //NEW: These tasks were added via the kotlin plugin in build gradle
