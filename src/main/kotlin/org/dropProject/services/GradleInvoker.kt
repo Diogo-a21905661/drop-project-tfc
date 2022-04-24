@@ -38,7 +38,7 @@ import java.util.*
 public class GradleInvoker {    
     val LOG = LoggerFactory.getLogger(this.javaClass.name)
 
-    @Value("\${dropProject.gradle}") //NEW: Not sure where this is supposed to go but i believe its right
+    @Value("\${dropProject.maven.home}") //NEW: For now kep maven home as it might be same, not sure
     val gradleHome : String = ""
 
     @Value("\${dropProject.maven.repository}") //NEW: Just use same repository as Maven (who cares)
