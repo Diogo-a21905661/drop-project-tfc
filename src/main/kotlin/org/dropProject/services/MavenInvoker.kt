@@ -25,7 +25,7 @@ import org.apache.maven.model.io.xpp3.MavenXpp3Writer
 import org.apache.maven.shared.invoker.DefaultInvocationRequest
 import org.apache.maven.shared.invoker.DefaultInvoker
 import org.dropProject.Constants
-import org.dropProject.data.MavenResult
+import org.dropProject.data.Result
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
@@ -63,9 +63,9 @@ class MavenInvoker {
      * @param principalName is a String
      * @param maxMemoryMb is an Int
      *
-     * @return a MavenResult
+     * @return a Result
      */
-    fun run(mavenizedProjectFolder: File, principalName: String?, maxMemoryMb: Int?) : MavenResult {
+    fun run(mavenizedProjectFolder: File, principalName: String?, maxMemoryMb: Int?) : Result {
 
         if (!File(mavenRepository).exists()) {
             val success = File(mavenRepository).mkdirs()
@@ -140,7 +140,7 @@ class MavenInvoker {
             if (result.executionException != null) {
                 if (result.executionException is org.apache.maven.shared.utils.cli.CommandLineTimeOutException) {
                     LOG.error("Maven execution too long. Aborting...")
-                    return MavenResult(resultCode = result.exitCode, outputLines = outputLines, expiredByTimeout = true)
+                    return Result(resultCode = result.exitCode, outputLines = outputLines, expiredByTimeout = true)
                 } else {
                     LOG.error("Error: ${result.executionException}")
                 }
@@ -149,7 +149,7 @@ class MavenInvoker {
             }
         }
 
-        return MavenResult(resultCode = result.exitCode, outputLines = outputLines)
+        return Result(resultCode = result.exitCode, outputLines = outputLines)
     }
 
     private fun transformPomFile(mavenizedProjectFolder: File, dpArgLine: String): File {

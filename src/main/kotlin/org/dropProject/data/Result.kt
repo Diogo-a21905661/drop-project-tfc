@@ -22,12 +22,14 @@ package org.dropProject.data
 import org.dropProject.Constants
 
 /**
- * Represents the Output of a Gradle build process.
+ * NEW: Represents the Output of a build process, being it either Maven or Gradle.
  *
  * @property resultCode is an Int
  * @property outputLines is a List of String
  * @property expiredByTimeout is a Boolean
  */
-data class GradleResult(val resultCode : Int,
+data class Result(val resultCode : Int,
+                       val outputLines: List<String> = "",
                        var expiredByTimeout : Boolean = false) {
+    fun tooMuchOutput() = outputLines.size >= Constants.TOO_MUCH_OUTPUT_THRESHOLD
 }

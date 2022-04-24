@@ -20,7 +20,7 @@
 package org.dropProject.services
 
 import org.dropProject.Constants
-import org.dropProject.data.GradleResult
+import org.dropProject.data.Result
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
@@ -59,9 +59,9 @@ public class GradleInvoker {
      * @param principalName is a String
      * @param maxMemoryMb is an Int
      *
-     * @return a GradleResult
+     * @return a Result
      */
-    fun run(projectFolder: File, principalName: String?, maxMemoryMb: Int?) : GradleResult {
+    fun run(projectFolder: File, principalName: String?, maxMemoryMb: Int?) : Result {
         // error check if repository already exists
         if (!File(repository).exists()) {
             val success = File(repository).mkdirs()
@@ -89,6 +89,7 @@ public class GradleInvoker {
         var connector = org.gradle.tooling.GradleConnector.newConnector();        
         connector.useInstallation(gradleHome);        
         connector.forProjectDirectory(new File(repository));    
+        connector.projectFolder(new File(projectFolder))
 
         //NEW: Compile through gradle
         val connection = connector.connect();    
@@ -103,6 +104,6 @@ public class GradleInvoker {
             connection.close();
         }   
 
-        return GradleResult(resultCode = result.exitCode)
+        return Result(resultCode = result.exitCode)
     }
 }
