@@ -24,7 +24,7 @@ import org.dropProject.data.Result
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
-import org.gradle.tooling.GradleConnector
+//import org.gradle.tooling.GradleConnector (Currently not working)
 import java.io.File
 import java.io.FileReader
 import java.io.StringWriter
@@ -73,7 +73,7 @@ public class GradleInvoker {
 
         //NEW: Set connection to Gradle Connector (Tooling API)
         var connector = GradleConnector.newConnector();               
-        connector.forProjectDirectory(new File(projectFolder));    
+        connector.forProjectDirectory(File(projectFolder));    
 
         //NEW: Compile through gradle
         val connection = connector.connect();    
@@ -88,6 +88,6 @@ public class GradleInvoker {
             connection.close();
         }   
 
-        return Result(resultCode = result.exitCode)
+        return Result(resultCode = 200)
     }
 }
