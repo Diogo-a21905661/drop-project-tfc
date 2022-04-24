@@ -53,7 +53,7 @@ class AdminController(val mavenInvoker: MavenInvoker,
      */
     @RequestMapping(value = ["/dashboard"], method = [(RequestMethod.GET)])
     fun showDashboard(model: ModelMap): String {
-        model["adminDashboardForm"] = AdminDashboardForm(showMavenOutput = mavenInvoker.showMavenOutput)
+        model["adminDashboardForm"] = AdminDashboardForm(showOutput = mavenInvoker.showOutput)
         return "admin-dashboard"
     }
 
@@ -71,7 +71,7 @@ class AdminController(val mavenInvoker: MavenInvoker,
             return "admin-dashboard"
         }
 
-        mavenInvoker.showMavenOutput = adminDashboardForm.showMavenOutput
+        mavenInvoker.showOutput = adminDashboardForm.showOutput
 
         redirectAttributes.addFlashAttribute("message", "Operation was successful")
         return "redirect:/admin/dashboard"

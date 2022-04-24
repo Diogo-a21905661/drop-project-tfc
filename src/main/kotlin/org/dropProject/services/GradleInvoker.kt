@@ -33,15 +33,15 @@ import java.util.*
  * NEW: Added to perform Gradle tasks
  * Utility to perform Gradle related tasks.
  */
-public class GradleConnector {    
-    val connector : org.gradle.tooling.GradleConnector; //NEW: Tooling API connector to tasks
+public class GradleInvoker {    
+    val gradleConnector : org.gradle.tooling.GradleConnector; //NEW: Tooling API connector to tasks
     
     val LOG = LoggerFactory.getLogger(this.javaClass.name)
 
-    @Value("\${dropProject.maven.home}")
+    @Value("\${dropProject.gradle.home}") //NEW: Not sure where this is supposed to go
     val home : String = ""
 
-    @Value("\${dropProject.maven.repository}")
+    @Value("\${dropProject.maven.repository}") //NEW: Just use same repository as Maven (who cares)
     val repository : String = ""
 
     var securityManagerEnabled = true
@@ -53,43 +53,13 @@ public class GradleConnector {
     var showOutput = false
 
     //Gradle Invoker constructor
-    fun GradleInvoker(String gradleInstallationDir, String projectDir) {        
+    fun GradleInvoker() {        
         File newGradleInstallationDir = new File(gradleInstallationDir);        
         
         connector = org.gradle.tooling.GradleConnector.newConnector();        
         connector.useInstallation(newGradleInstallationDir);        
-        connector.forProjectDirectory(new File(projectDir));    
+        connector.forProjectDirectory(new File(repository));    
     }    
-  
-    //Get current Gradle version
-    fun getGradleVersion() : String {        
-        return GradleVersion.current().getVersion();    
-    }    
-  
-    //Get Gradle task names
-    fun getGradleTaskNames() : List<String> {        
-        List<String> taskNames = new ArrayList<>();        
-        List<GradleTask> tasks = getGradleTasks();        
-       
-        return tasks.stream().map(task -> task.getName()).collect(Collectors.toList());    
-    }    
-
-    //Get Gradle tasks
-    fun getGradleTasks() :  List<GradleTask> {        
-        List<GradleTask> tasks = new ArrayList<>();        
-        ProjectConnection connection = connector.connect();        
-        
-        try {            
-            GradleProject project = connection.getModel(GradleProject.class);            
-            for (GradleTask task : project.getTasks()) {                
-                tasks.add(task);            
-            }        
-        } finally {            
-            connection.close();        
-        }        
-
-        return tasks;    
-    }
 
     //Build project using Gradle with all tasks
     fun buildProject() : boolean {    
