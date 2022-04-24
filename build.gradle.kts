@@ -74,7 +74,7 @@ dependencies {
 group = "org.dropProject"
 version = "0.9.6"
 description = "DropProject"
-java.sourceCompatibility = JavaVersion.VERSION_1_8
+java.sourceCompatibility = JavaVersion.VERSION_11
 
 tasks.withType<JavaCompile>() {
     options.encoding = "UTF-8"
