@@ -24,7 +24,7 @@ import org.dropProject.data.Result
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
-import org.gradle.
+import org.gradle.tooling.GradleConnector
 import java.io.File
 import java.io.FileReader
 import java.io.StringWriter
@@ -72,7 +72,7 @@ public class GradleInvoker {
         val outputLines = ArrayList<String>()
 
         //NEW: Set connection to Gradle Connector (Tooling API)
-        var connector = org.gradle.tooling.GradleConnector.newConnector();               
+        var connector = GradleConnector.newConnector();               
         connector.forProjectDirectory(new File(projectFolder));    
 
         //NEW: Compile through gradle
