@@ -6,8 +6,8 @@
 
 /*
  * Add the java and kotlin src dirs leading to main
- * This will be where the files are kept for compilation and testing
- *  
+ * 
+ * This will be where the files are kept for compilation and testing 
  */
 sourceSets.main {
     java.srcDirs("\${dropProject.maven.repository}")

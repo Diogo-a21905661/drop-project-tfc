@@ -24,7 +24,7 @@ import org.dropProject.data.Result
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
-import dropProject.gradle.tooling.GradleConnector
+import org.gradle.tooling.GradleConnector
 import java.io.File
 import java.io.FileReader
 import java.io.StringWriter
