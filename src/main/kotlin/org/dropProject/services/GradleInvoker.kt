@@ -88,7 +88,7 @@ public class GradleInvoker {
         //NEW: Set connection to Gradle Connector (Tooling API)
         var connector = org.gradle.tooling.GradleConnector.newConnector();        
         connector.useInstallation(gradleHome);        
-        connector.forProjectDirectory(new File(projectFolder));    
+        connector.forProjectDirectory(new File(repository));    
 
         //NEW: Compile through gradle
         val connection = connector.connect();    
@@ -96,29 +96,13 @@ public class GradleInvoker {
         
         //NEW: Compile depending on wether its kotlin or java
         //NEW: These tasks were added via the kotlin plugin in build gradle
+        var result
         try {   
-            build.compileKotlin();
+            result = build.compileKotlin();
         }finally {
             connection.close();
         }   
 
-        var numLines = 0
-        request.setOutputHandler {
-            line -> run {
-                if (showOutput) {
-                    println(">>> ${line}")
-                }
-                numLines++
-                if (numLines < Constants.TOO_MUCH_OUTPUT_THRESHOLD) {
-                    outputLines.add(line)
-                }
-                if (numLines == Constants.TOO_MUCH_OUTPUT_THRESHOLD) {
-                    outputLines.add("*** Trimmed here by DP ***")
-                }
-            }
-        }
-
-
-        return GradleResult(resultCode = result.exitCode, outputLines = outputLines)
+        return GradleResult(resultCode = result.exitCode)
     }
 }

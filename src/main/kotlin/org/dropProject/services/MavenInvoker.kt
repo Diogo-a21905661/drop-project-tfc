@@ -114,7 +114,7 @@ class MavenInvoker {
         var numLines = 0
         request.setOutputHandler {
             line -> run {
-                if (showMavenOutput) {
+                if (showOutput) {
                     println(">>> ${line}")
                 }
                 numLines++

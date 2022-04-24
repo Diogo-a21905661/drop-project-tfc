@@ -29,7 +29,5 @@ import org.dropProject.Constants
  * @property expiredByTimeout is a Boolean
  */
 data class GradleResult(val resultCode : Int,
-                       val outputLines: List<String>,
                        var expiredByTimeout : Boolean = false) {
-    fun tooMuchOutput() = outputLines.size >= Constants.TOO_MUCH_OUTPUT_THRESHOLD
 }
