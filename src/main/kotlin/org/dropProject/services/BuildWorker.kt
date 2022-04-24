@@ -25,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional
 import org.dropProject.dao.*
 import org.dropProject.data.BuildReport
 import org.dropProject.data.TestType
+import org.dropProject.data.Result
 import org.dropProject.repository.*
 import org.slf4j.LoggerFactory
 import java.io.File
