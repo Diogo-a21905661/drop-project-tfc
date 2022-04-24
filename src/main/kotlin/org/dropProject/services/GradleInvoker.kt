@@ -70,7 +70,7 @@ public class GradleInvoker {
         }
 
         /*
-        Commented these lines due to previous errors with gradle import, will have to check in next delivery 
+        TODO: Commented these lines due to previous errors with gradle import, will have to check in next delivery 
         val outputLines = ArrayList<String>()
 
         //NEW: Set connection to Gradle Connector (Tooling API)

@@ -24,19 +24,19 @@ import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertTrue
 import org.junit.Test
 
-class TestMavenResult {
+class TestResult {
     @Test
-    fun testMavenResult() {
+    fun TestResult() {
         val outputLines = mutableListOf<String>()
-        var mvnResult = MavenResult(100, outputLines, true)
-        assertTrue(mvnResult.expiredByTimeout)
-        assertEquals(100, mvnResult.resultCode)
+        var result = Result(100, outputLines, true)
+        assertTrue(result.expiredByTimeout)
+        assertEquals(100, result.resultCode)
 
-        var mvnResult2 = MavenResult(200, outputLines, false)
-        assertFalse(mvnResult2.expiredByTimeout)
-        assertEquals(200, mvnResult2.resultCode)
+        var result2 = Result(200, outputLines, false)
+        assertFalse(result2.expiredByTimeout)
+        assertEquals(200, result2.resultCode)
 
-        mvnResult2.expiredByTimeout = true
-        assertTrue(mvnResult2.expiredByTimeout)
+        result2.expiredByTimeout = true
+        assertTrue(result2.expiredByTimeout)
     }
 }
