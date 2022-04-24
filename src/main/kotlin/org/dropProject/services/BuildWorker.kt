@@ -81,7 +81,7 @@ class BuildWorker(
         val assignment = assignmentRepository.findById(submission.assignmentId).orElse(null)
 
         //NEW: Added condition to check if either Maven or Gradle are used
-        val result: Result
+        val result: Result(0)
         if (assignment.compiler == Compiler.MAVEN) {
             if (assignment.maxMemoryMb != null) {
                 LOG.info("[${authorsStr}] Started maven invocation (max: ${assignment.maxMemoryMb}Mb)")
