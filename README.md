@@ -11,7 +11,7 @@
 
 Heroku link: https://drop-project-tfc.herokuapp.com/
 
-Video de Teste: 
+Video de Teste: https://youtu.be/PBT7qwgqtkA
 
 A web application where students drop their projects to check for correctness and quality.
 
