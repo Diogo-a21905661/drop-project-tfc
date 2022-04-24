@@ -4,13 +4,6 @@
  * This project uses @Incubating APIs which are subject to change.
  */
 
-plugins {
-    java
-    idea
-    war
-    kotlin("multiplatforms") version "1.6.21" //NEW: Added kotlin plugin for compile and testing
-}
-
 /*
  * Add the java and kotlin src dirs leading to main
  * This will be where the files are kept for compilation and testing
@@ -21,13 +14,22 @@ sourceSets.main {
 }
 
 repositories {
-    mavenLocal()
     maven {
         url = uri("https://repo.maven.apache.org/maven2/")
         url = uri("https://repo.gradle.org/gradle/libs-releases") //NEW: Added gradle repository for tooling api
+        url = uri("https://repo.gradle.org/gradle/libs-releases-local/")
+        url = uri("https://repo.gradle.org/gradle/tooling-api")
     }
     mavenCentral()
+    mavenLocal()
     jcenter()
+}
+
+plugins {
+    java
+    idea
+    war
+    kotlin("jvm") version "1.6.21" //NEW: Added kotlin plugin for compile and testing
 }
 
 dependencies {
@@ -73,12 +75,6 @@ group = "org.dropProject"
 version = "0.9.6"
 description = "DropProject"
 java.sourceCompatibility = JavaVersion.VERSION_1_8
-
-publishing {
-    publications.create<MavenPublication>("maven") {
-        from(components["java"])
-    }
-}
 
 tasks.withType<JavaCompile>() {
     options.encoding = "UTF-8"
