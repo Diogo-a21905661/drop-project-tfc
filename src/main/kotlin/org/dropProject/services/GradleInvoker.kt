@@ -38,8 +38,8 @@ public class GradleInvoker {
     
     val LOG = LoggerFactory.getLogger(this.javaClass.name)
 
-    @Value("\${dropProject.gradle.home}") //NEW: Not sure where this is supposed to go
-    val home : String = ""
+    @Value("\${dropProject.gradle}") //NEW: Not sure where this is supposed to go but i believe its right
+    val gradleHome : String = ""
 
     @Value("\${dropProject.maven.repository}") //NEW: Just use same repository as Maven (who cares)
     val repository : String = ""
@@ -51,29 +51,6 @@ public class GradleInvoker {
     }
 
     var showOutput = false
-
-    //Gradle Invoker constructor
-    fun GradleInvoker() {        
-        File newGradleInstallationDir = new File(gradleInstallationDir);        
-        
-        connector = org.gradle.tooling.GradleConnector.newConnector();        
-        connector.useInstallation(newGradleInstallationDir);        
-        connector.forProjectDirectory(new File(repository));    
-    }    
-
-    //Build project using Gradle with all tasks
-    fun buildProject() : boolean {    
-        ProjectConnection connection = connector.connect();    
-        BuildLauncher build = connection.newBuild();    
-        
-        try {
-            build.run();
-        }finally {
-            connection.close();
-        }   
-
-        return true;
-    }
 
     //Build project using Gradle while using tasks
     fun buildProjectWithTasks(String tasks) : boolean {   
@@ -123,8 +100,22 @@ public class GradleInvoker {
             dpArgLine += " -Djava.security.manager=org.dropProject.security.SandboxSecurityManager"
         }
 
-        //Compile through gradle
-        buildProject()
+        //NEW: Set connection to Gradle Connector (Tooling API)
+        connector = org.gradle.tooling.GradleConnector.newConnector();        
+        connector.useInstallation(gradleHome);        
+        connector.forProjectDirectory(new File(projectFolder));    
+
+        //NEW: Compile through gradle
+        ProjectConnection connection = connector.connect();    
+        BuildLauncher build = connection.newBuild();    
+        
+        //NEW: Compile depending on wether its kotlin or java
+        //NEW: These tasks were added via the kotlin plugin in build gradle
+        try {   
+            build.compileKotlin();
+        }finally {
+            connection.close();
+        }   
 
         var numLines = 0
         request.setOutputHandler {

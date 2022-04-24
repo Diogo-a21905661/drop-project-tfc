@@ -17,7 +17,7 @@ plugins {
  *  
  */
 sourceSets.main {
-    java.srcDirs("src/main")
+    java.srcDirs("\${dropProject.maven.repository}")
 }
 
 repositories {
