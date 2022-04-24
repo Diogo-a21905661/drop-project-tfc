@@ -34,6 +34,7 @@ import java.util.*
  * NEW: Added to perform Gradle tasks
  * Utility to perform Gradle related tasks.
  */
+@Service
 public class GradleInvoker {    
     val LOG = LoggerFactory.getLogger(this.javaClass.name)
 
