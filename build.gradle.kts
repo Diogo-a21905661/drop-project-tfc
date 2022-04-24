@@ -8,7 +8,16 @@ plugins {
     java
     idea
     war
-    kotlin("jvm") version "1.6.20" //NEW: Added kotlin plugin for compile and testing
+    kotlin("multiplatforms") version "1.6.21" //NEW: Added kotlin plugin for compile and testing
+}
+
+/*
+ * Add the java and kotlin src dirs leading to main
+ * This will be where the files are kept for compilation and testing
+ *  
+ */
+sourceSets.main {
+    java.srcDirs("src/main")
 }
 
 repositories {

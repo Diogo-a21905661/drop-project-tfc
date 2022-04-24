@@ -91,7 +91,7 @@ public class GradleConnector {
         return tasks;    
     }
 
-    //Build project using Gradle without using tasks
+    //Build project using Gradle with all tasks
     fun buildProject() : boolean {    
         ProjectConnection connection = connector.connect();    
         BuildLauncher build = connection.newBuild();    
@@ -130,7 +130,6 @@ public class GradleConnector {
      * @return a GradleResult
      */
     fun run(projectFolder: File, principalName: String?, maxMemoryMb: Int?) : GradleResult {
-
         // error check if repository already exists
         if (!File(repository).exists()) {
             val success = File(repository).mkdirs()
@@ -154,6 +153,9 @@ public class GradleConnector {
             dpArgLine += " -Djava.security.manager=org.dropProject.security.SandboxSecurityManager"
         }
 
+        //Compile through gradle
+        buildProject()
+
         var numLines = 0
         request.setOutputHandler {
             line -> run {
@@ -170,7 +172,6 @@ public class GradleConnector {
             }
         }
 
-        //Have to put Gradle compilation here
 
         return GradleResult(resultCode = result.exitCode, outputLines = outputLines)
     }
