@@ -24,6 +24,7 @@ import org.dropProject.data.Result
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
+import org.gradle.
 import java.io.File
 import java.io.FileReader
 import java.io.StringWriter
@@ -34,8 +35,6 @@ import java.util.*
  * Utility to perform Gradle related tasks.
  */
 public class GradleInvoker {    
-    val gradleConnector : org.gradle.tooling.GradleConnector; //NEW: Tooling API connector to tasks
-    
     val LOG = LoggerFactory.getLogger(this.javaClass.name)
 
     @Value("\${dropProject.gradle}") //NEW: Not sure where this is supposed to go but i believe its right
@@ -72,24 +71,9 @@ public class GradleInvoker {
 
         val outputLines = ArrayList<String>()
 
-        var dpArgLine = ""
-        if (maxMemoryMb != null) {
-            dpArgLine += " -Xmx${maxMemoryMb}M"
-        }
-
-        // check principal name and security manager (output)
-        if (principalName != null) {
-            dpArgLine += " -DdropProject.currentUserId=${principalName}"
-        }
-        if (securityManagerEnabled) {
-            dpArgLine += " -Djava.security.manager=org.dropProject.security.SandboxSecurityManager"
-        }
-
         //NEW: Set connection to Gradle Connector (Tooling API)
-        var connector = org.gradle.tooling.GradleConnector.newConnector();        
-        connector.useInstallation(gradleHome);        
-        connector.forProjectDirectory(new File(repository));    
-        connector.projectFolder(new File(projectFolder))
+        var connector = org.gradle.tooling.GradleConnector.newConnector();               
+        connector.forProjectDirectory(new File(projectFolder));    
 
         //NEW: Compile through gradle
         val connection = connector.connect();    
@@ -97,7 +81,7 @@ public class GradleInvoker {
         
         //NEW: Compile depending on wether its kotlin or java
         //NEW: These tasks were added via the kotlin plugin in build gradle
-        var result
+        var result: Result = Result()
         try {   
             result = build.compileKotlin();
         }finally {

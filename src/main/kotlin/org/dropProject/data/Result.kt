@@ -28,8 +28,8 @@ import org.dropProject.Constants
  * @property outputLines is a List of String
  * @property expiredByTimeout is a Boolean
  */
-data class Result(val resultCode : Int,
-                       val outputLines: List<String> = "",
+data class Result(val resultCode : Int = 0,
+                       val outputLines: List<String> = listOf<String>(),
                        var expiredByTimeout : Boolean = false) {
     fun tooMuchOutput() = outputLines.size >= Constants.TOO_MUCH_OUTPUT_THRESHOLD
 }

@@ -81,7 +81,8 @@ class BuildWorker(
         val assignment = assignmentRepository.findById(submission.assignmentId).orElse(null)
 
         //NEW: Added condition to check if either Maven or Gradle are used
-        val result: Result(0)
+        var result: Result = Result()
+        val realPrincipalName = if (rebuildByTeacher) submission.submitterUserId else principalName
         if (assignment.compiler == Compiler.MAVEN) {
             if (assignment.maxMemoryMb != null) {
                 LOG.info("[${authorsStr}] Started maven invocation (max: ${assignment.maxMemoryMb}Mb)")
@@ -89,7 +90,6 @@ class BuildWorker(
                 LOG.info("[${authorsStr}] Started maven invocation")
             }
 
-            val realPrincipalName = if (rebuildByTeacher) submission.submitterUserId else principalName
             result = mavenInvoker.run(projectFolder, realPrincipalName, assignment.maxMemoryMb)
     
             LOG.info("[${authorsStr}] Finished maven invocation")
@@ -100,7 +100,6 @@ class BuildWorker(
                 LOG.info("[${authorsStr}] Started gradle invocation")
             }
 
-            val realPrincipalName = if (rebuildByTeacher) submission.submitterUserId else principalName
             result = gradleInvoker.run(projectFolder, realPrincipalName, assignment.maxMemoryMb)
         }
 
@@ -215,7 +214,7 @@ class BuildWorker(
                         LOG.info("[${authorsStr}] Finished maven invocation (for coverage)")
 
                         // check again the result of the tests
-                        val buildReportCoverage = buildReportBuilder.build(mavenResult.outputLines, projectFolder.absolutePath,
+                        val buildReportCoverage = buildReportBuilder.build(result.outputLines, projectFolder.absolutePath,
                                 assignment, submission)
                         if (buildReportCoverage.hasJUnitErrors(TestType.STUDENT) == true) {
                             LOG.warn("Submission ${submission.id} failed executing student tests when isolated from teacher tests")
