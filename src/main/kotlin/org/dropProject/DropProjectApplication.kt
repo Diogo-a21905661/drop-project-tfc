@@ -68,7 +68,3 @@ class DropProjectApplication : SpringBootServletInitializer() {
 //    System.setProperty("spring.config.name", "drop-project")
 //    SpringApplication.run(DropProjectApplication::class.java, *args)
 //}
-
-
-
-

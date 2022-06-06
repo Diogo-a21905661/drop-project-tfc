@@ -78,7 +78,6 @@ class BuildWorker(
     @Transactional
     fun checkProject(projectFolder: File, authorsStr: String, submission: Submission,
                           principalName: String?, dontChangeStatusDate: Boolean = false, rebuildByTeacher: Boolean = false) {
-
         val assignment = assignmentRepository.findById(submission.assignmentId).orElse(null)
 
         //NEW: Added condition to check if either Maven or Gradle are used
@@ -94,7 +93,7 @@ class BuildWorker(
             result = mavenInvoker.run(projectFolder, realPrincipalName, assignment.maxMemoryMb)
     
             LOG.info("[${authorsStr}] Finished maven invocation")
-        } else { // gradle is used as compiler
+        } else { //Assignment type is Gradle
             if (assignment.maxMemoryMb != null) {
                 LOG.info("[${authorsStr}] Started gradle invocation (max: ${assignment.maxMemoryMb}Mb)")
             } else {
@@ -102,6 +101,8 @@ class BuildWorker(
             }
 
             result = gradleInvoker.run(projectFolder, realPrincipalName, assignment.maxMemoryMb)
+
+            LOG.info("[${authorsStr}] Finished gradle invocation")
         }
 
         // check result for errors (expired, too much output)
@@ -130,13 +131,10 @@ class BuildWorker(
                                     reportKey = Indicator.CHECKSTYLE.code, reportValue = if (buildReport.checkstyleErrors().isEmpty()) "OK" else "NOK"))
                         }
 
-
                         // PMD not yet implemented
-//                submissionReportRepository.deleteBySubmissionIdAndReportKey(submission.id, "Code Quality (PMD)")
-//                submissionReportRepository.save(SubmissionReport(submissionId = submission.id,
-//                        reportKey = "Code Quality (PMD)", reportValue = if (buildReport.PMDerrors().isEmpty()) "OK" else "NOK"))
-
-
+                        // submissionReportRepository.deleteBySubmissionIdAndReportKey(submission.id, "Code Quality (PMD)")
+                        // submissionReportRepository.save(SubmissionReport(submissionId = submission.id,
+                        // reportKey = "Code Quality (PMD)", reportValue = if (buildReport.PMDerrors().isEmpty()) "OK" else "NOK"))
 
                         if (assignment.acceptsStudentTests) {
 
@@ -265,6 +263,7 @@ class BuildWorker(
     }
 
     /**
+     * NEW: Added Gradle check for LOG comparable to Maven
      * Checks an [Assignment], performing all the relevant steps and generates the respective [BuildReport].
      *
      * @param assignmentFolder is a File
@@ -274,21 +273,35 @@ class BuildWorker(
      * @return a [BuildReport] or null
      */
     fun checkAssignment(assignmentFolder: File, assignment: Assignment, principalName: String?) : BuildReport? {
+        if (assignment.compiler == Compiler.MAVEN) {
+            LOG.info("Started maven invocation to check ${assignment.id}");
 
-        LOG.info("Started maven invocation to check ${assignment.id}");
+            val mavenResult = mavenInvoker.run(assignmentFolder, principalName, assignment.maxMemoryMb)
 
-        val mavenResult = mavenInvoker.run(assignmentFolder, principalName, assignment.maxMemoryMb)
+            LOG.info("Finished maven invocation to check ${assignment.id}");
 
-        LOG.info("Finished maven invocation to check ${assignment.id}");
+            if (!mavenResult.expiredByTimeout) {
+                LOG.info("Maven invoker OK for ${assignment.id}")
+                return buildReportBuilder.build(mavenResult.outputLines, assignmentFolder.absolutePath, assignment)
+            } else {
+                LOG.info("Maven invoker aborted by timeout for ${assignment.id}")
+            }
+        } else { //NEW: Assignment is Gradle
+            LOG.info("Started gradle invocation to check ${assignment.id}");
 
-        if (!mavenResult.expiredByTimeout) {
-            LOG.info("Maven invoker OK for ${assignment.id}")
-            return buildReportBuilder.build(mavenResult.outputLines, assignmentFolder.absolutePath, assignment)
-        } else {
-            LOG.info("Maven invoker aborted by timeout for ${assignment.id}")
-            return null
+            val gradleResult = gradleInvoker.run(assignmentFolder, principalName, assignment.maxMemoryMb)
+
+            LOG.info("Finished gradle invocation to check ${assignment.id}");
+
+            if (!gradleResult.expiredByTimeout) {
+                LOG.info("Gradle invoker OK for ${assignment.id}")
+                return buildReportBuilder.build(gradleResult.outputLines, assignmentFolder.absolutePath, assignment)
+            } else {
+                LOG.info("Gradle invoker aborted by timeout for ${assignment.id}")
+            }
         }
 
+        return null
     }
 
 }

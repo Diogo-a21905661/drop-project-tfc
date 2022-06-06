@@ -22,6 +22,16 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 
+	<!-- Gradle Repository -->
+	<!-- 
+	<repositories>
+		<repository>
+			<id>org.gradle</id>
+			<name>org.gradle</name>
+			<url>https://mvnrepository.com/artifact/org.gradle/</url>
+		</repository>
+	</repositories> -->
+
 	<properties>
 		<kotlin.compiler.incremental>true</kotlin.compiler.incremental>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -189,6 +199,15 @@
 			<artifactId>jackson-module-kotlin</artifactId>
 			<version>2.12.2</version>
 		</dependency>
+
+		<!-- https://mvnrepository.com/artifact/org.gradle/gradle-tooling-api -->
+		<!-- Tooling API to run tasks in 3rd party -->
+		<!--
+		<dependency>
+			<groupId>org.gradle</groupId>
+			<artifactId>gradle-tooling-api</artifactId>
+			<version>7.3-20210825160000+0000</version>
+		</dependency> -->
 
 		<dependency>
 			<groupId>com.h2database</groupId>

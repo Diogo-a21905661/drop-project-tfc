@@ -13,62 +13,27 @@ sourceSets.main {
     java.srcDirs("\${dropProject.maven.repository}")
 }
 
+//NEW: Added gradle repository for tooling api
 repositories {
-    maven {
-        url = uri("https://repo.maven.apache.org/maven2/")
-        url = uri("https://repo.gradle.org/gradle/libs-releases") //NEW: Added gradle repository for tooling api
-        url = uri("https://repo.gradle.org/gradle/libs-releases-local/")
-        url = uri("https://repo.gradle.org/gradle/tooling-api")
-    }
     mavenCentral()
     mavenLocal()
-    jcenter()
 }
 
+//NEW: Added kotlin plugin for compile and testing
 plugins {
-    java
     idea
     war
-    kotlin("jvm") version "1.6.21" //NEW: Added kotlin plugin for compile and testing
+    java
+    application
+    id("org.springframework.boot") version "2.6.7"
+    id("org.jetbrains.kotlin.jvm") version "1.5.31"
 }
 
 dependencies {
-    implementation("org.springframework.boot:spring-boot-starter-thymeleaf:2.5.3")
-    implementation("org.springframework.boot:spring-boot-starter-web:2.5.3")
-    implementation("org.springframework.boot:spring-boot-starter-validation:2.5.3")
-    implementation("org.springframework.boot:spring-boot-starter-security:2.5.3")
-    implementation("org.springframework.boot:spring-boot-starter-data-jpa:2.5.3")
-    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.5.21")
-    implementation("org.jetbrains.kotlin:kotlin-reflect:1.5.21")
-    implementation("com.opencsv:opencsv:4.0")
-    implementation("org.hibernate:hibernate-java8:5.4.32.Final")
-    implementation("net.lingala.zip4j:zip4j:1.3.2")
-    implementation("commons-io:commons-io:2.7")
-    implementation("org.apache.maven.shared:maven-invoker:3.0.1")
-    implementation("org.apache.any23:apache-any23-encoding:2.2")
-    implementation("org.eclipse.jgit:org.eclipse.jgit:5.0.1.201806211838-r")
-    implementation("org.thymeleaf.extras:thymeleaf-extras-springsecurity5:3.0.4.RELEASE")
-    implementation("org.apache.maven.surefire:surefire-report-parser:2.22.1")
-    implementation("org.apache.maven:maven-model:3.0.2")
-    implementation("com.atlassian.commonmark:commonmark:0.14.0")
-    implementation("com.atlassian.commonmark:commonmark-ext-autolink:0.14.0")
-    implementation("org.springframework.boot:spring-boot-starter-oauth2-client:2.5.3")
-    implementation("com.thoughtworks.qdox:qdox:2.0.0")
-    implementation("org.springframework.boot:spring-boot-starter-cache:2.5.3")
-    implementation("org.springframework:spring-core:4.3.2.RELEASE") //NEW: Added new Spring implementation for Gradle
-    implementation("org.springframework.amqp:spring-rabbit:1.5.2.RELEASE") //NEW: Added new Spring implementation for Gradle
-    implementation("javax.cache:cache-api:1.1.1")
-    implementation("org.ehcache:ehcache:3.8.1")
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.12.2")
-    implementation("org.gradle:gradle-tooling-api:1.7.30") //NEW: Added tooling api implementation
+    implementation("org.springframework:spring-core:4.3.2.RELEASE") //Added new Spring implementation for Gradle
+    implementation("org.springframework.amqp:spring-rabbit:1.5.2.RELEASE") //Added new Spring implementation for Gradle
+    implementation("org.gradle:gradle-tooling-api:7.3-20210825160000+0000") //Added tooling api implementation
     runtimeOnly("org.slf4j:slf4j-simple:1.7.10") //NEW: Added runtime only implementation for tooling api (Should work)
-    runtimeOnly("com.h2database:h2:1.4.196")
-    runtimeOnly("mysql:mysql-connector-java:8.0.26")
-    testImplementation("org.springframework.boot:spring-boot-starter-test:2.5.3")
-    testImplementation("org.springframework.security:spring-security-test:4.0.0.RELEASE")
-    testImplementation("com.github.stefanbirkner:system-rules:1.19.0")
-    testImplementation("org.jetbrains.kotlin:kotlin-test:1.5.21")
-    providedCompile("org.springframework.boot:spring-boot-starter-tomcat:2.5.3")
 }
 
 group = "org.dropProject"

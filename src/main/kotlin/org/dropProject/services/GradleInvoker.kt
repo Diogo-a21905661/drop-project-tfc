@@ -24,11 +24,11 @@ import org.dropProject.data.Result
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
-//import org.gradle.tooling.GradleConnector (Currently not working)
 import java.io.File
 import java.io.FileReader
 import java.io.StringWriter
 import java.util.*
+import org.gradle.tooling.* //TODO: Import gradle tooling API
 
 /**
  * NEW: Added to perform Gradle tasks
@@ -38,7 +38,7 @@ import java.util.*
 public class GradleInvoker {    
     val LOG = LoggerFactory.getLogger(this.javaClass.name)
 
-    @Value("\${dropProject.maven.home}") //NEW: For now kep maven home as it might be same, not sure
+    @Value("\${dropProject.maven.home}") //NEW: For now keep maven home as it might be same, not sure
     val gradleHome : String = ""
 
     @Value("\${dropProject.maven.repository}") //NEW: Just use same repository as Maven (who cares)
@@ -62,7 +62,7 @@ public class GradleInvoker {
      * @return a Result
      */
     fun run(projectFolder: File, principalName: String?, maxMemoryMb: Int?) : Result {
-        // error check if repository already exists
+        //Check if repository already exists
         if (!File(repository).exists()) {
             val success = File(repository).mkdirs()
             if (!success) {
@@ -70,28 +70,20 @@ public class GradleInvoker {
             }
         }
 
+        //Setup connection to connector and to project directory
+        val connection = GradleConnector.newConnector()
+        .forProjectDirectory(projectFolder).connect()
+
         /*
-        TODO: Commented these lines due to previous errors with gradle import, will have to check in next delivery 
-        val outputLines = ArrayList<String>()
-
-        //NEW: Set connection to Gradle Connector (Tooling API)
-        var connector = GradleConnector.newConnector();               
-        connector.forProjectDirectory(File(projectFolder));    
-
-        //NEW: Compile through gradle
-        val connection = connector.connect();    
-        val build = connection.newBuild();    
-        
-        //NEW: Compile depending on wether its kotlin or java
-        //NEW: These tasks were added via the kotlin plugin in build gradle
-        var result: Result = Result()
-        try {   
-            result = build.compileKotlin();
-        }finally {
-            connection.close();
-        }   
+        //Run compile koltin task on connection (currently not working -> newBuild())
+        try {
+            connection.newBuild().forTasks("compileKotlin").run()
+        } finally {
+            connection.close()
+        }
         */
-
+ 
+        //Return result
         return Result(resultCode = 200)
     }
 }
