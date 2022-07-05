@@ -320,5 +320,4 @@ class GitClient {
 
         return diffList
     }
-
 }

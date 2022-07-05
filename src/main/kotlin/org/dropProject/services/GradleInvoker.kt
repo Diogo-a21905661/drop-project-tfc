@@ -38,12 +38,6 @@ import org.gradle.tooling.* //TODO: Import gradle tooling API
 public class GradleInvoker {    
     val LOG = LoggerFactory.getLogger(this.javaClass.name)
 
-    @Value("\${dropProject.maven.home}") //NEW: For now keep maven home as it might be same, not sure
-    val gradleHome : String = ""
-
-    @Value("\${dropProject.maven.repository}") //NEW: Just use same repository as Maven (who cares)
-    val repository : String = ""
-
     var securityManagerEnabled = true
 
     fun disableSecurity() {
@@ -62,27 +56,52 @@ public class GradleInvoker {
      * @return a Result
      */
     fun run(projectFolder: File, principalName: String?, maxMemoryMb: Int?) : Result {
+        LOG.info("Running gradle invoker")
+
         //Check if repository already exists
+        /* 
         if (!File(repository).exists()) {
             val success = File(repository).mkdirs()
             if (!success) {
                 LOG.error("Couldn't create the repository folder: $repository")
             }
         }
-
-        //Setup connection to connector and to project directory
-        val connection = GradleConnector.newConnector()
-        .forProjectDirectory(projectFolder).connect()
-
-        /*
-        //Run compile koltin task on connection (currently not working -> newBuild())
-        try {
-            connection.newBuild().forTasks("compileKotlin").run()
-        } finally {
-            connection.close()
-        }
         */
- 
+
+        LOG.info("Started gradle invoker")
+
+        try {
+            val connection = GradleConnector.newConnector().forProjectDirectory(projectFolder).connect()
+            val build: BuildLauncher = connection.newBuild()
+
+            //select tasks to run (changed test to compileTestKotlin)
+            build.forTasks("clean", "compileKotlin", "compileTestKotlin")
+
+            //include some build arguments:
+            /*
+            //configure the standard input:
+            build.setStandardInput(ByteArrayInputStream("consume this!".toByteArray()))
+            //in case you want the build to use java different than default:
+            build.setJavaHome(File("/path/to/java"))
+            //if your build needs crazy amounts of memory:
+            build.setJvmArguments("-Xmx2048m", "-XX:MaxPermSize=512m")
+            */
+
+            //if you want to listen to the progress events:
+            build.addProgressListener(ProgressListener {
+                LOG.info("progress ${it.description}")
+            })
+
+            //kick the build off
+            build.run()
+        } catch (ex: Exception) {
+            ex.printStackTrace()
+            LOG.error(ex.localizedMessage)
+        }
+
+        //Have to see what results came out of assignment
+        LOG.info("Finished gradle invoker")
+
         //Return result
         return Result(resultCode = 200)
     }

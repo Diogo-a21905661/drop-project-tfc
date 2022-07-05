@@ -72,6 +72,8 @@ class BuildReportBuilder {
               assignment: Assignment,
               submission: Submission? = null) : BuildReport {
 
+                LOG.info("Started Build report builder for ${assignment.id}");  
+
         val junitReportFromDB : List<JUnitReport>? =
                 if (submission != null) jUnitReportRepository.findBySubmissionId(submission.id)
                 else null
@@ -117,6 +119,8 @@ class BuildReportBuilder {
                 } else {
                     emptyList()
                 }
+
+                LOG.info("Finished Build report builder for ${assignment.id}");  
 
         return BuildReport(mavenOutputLines, mavenizedProjectFolder, assignment, jUnitResults, jacocoResults,
                 assignmentTestMethods)

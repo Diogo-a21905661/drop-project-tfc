@@ -190,7 +190,7 @@ class AssignmentController(
                 return "assignment-form"
             }
 
-            // check if we can connect to given git repository (Not working in test, maybe needs to be public??)
+            // check if we can connect to given git repository
             try {
                 val directory = File(assignmentsRootLocation, assignmentForm.assignmentId)
                 gitClient.clone(gitRepository, directory)
@@ -198,10 +198,10 @@ class AssignmentController(
             } catch (e: Exception) {
                 LOG.error("[${assignmentForm.assignmentId}] Error cloning ${gitRepository} - ${e}")
                 if (e.message.orEmpty().contains("Invalid remote: origin") || e.message.orEmpty().contains("Auth fail")) {
-                    // probably will need authentication
+                    // probably will need authentication (Auth fail)
                     mustSetupGitConnection = true
                     LOG.info("[${assignmentForm.assignmentId}] will redirect to setup-git")
-//                    bindingResult.rejectValue("gitRepositoryUrl", "repository.invalid", "Error: Git repository is invalid or inexistent")
+                    //bindingResult.rejectValue("gitRepositoryUrl", "repository.invalid", "Error: Git repository is invalid or inexistent")
                 } else {
                     LOG.warn("[${assignmentForm.assignmentId}] Cloning error is neither 'Invalid remote: origin' " +
                             "or 'Auth fail' : [${e.message.orEmpty()}]")
@@ -212,11 +212,8 @@ class AssignmentController(
             }
 
             val newAssignment = createAssignmentBasedOnForm(assignmentForm, principal)
-
             assignmentRepository.save(newAssignment)
-
             assignment = newAssignment
-
         } else {   // update
 
             val assignmentId = assignmentForm.assignmentId ?:
@@ -285,6 +282,7 @@ class AssignmentController(
             }
         }
 
+        // Auth fail leads here
         if (mustSetupGitConnection) {
             return "redirect:/assignment/setup-git/${assignmentForm.assignmentId}"
         } else {
@@ -594,8 +592,9 @@ class AssignmentController(
         }
 
         val gitRepository = assignment.gitRepositoryUrl
-        try {
+        try {   
             val directory = File(assignmentsRootLocation, assignment.gitRepositoryFolder)
+            LOG.info("Not working? Directory is ${directory} Git repository is ${gitRepository}")
             gitClient.clone(gitRepository, directory, assignment.gitRepositoryPrivKey!!.toByteArray())
             LOG.info("[${assignmentId}] Successfuly cloned ${gitRepository} to ${directory}")
         } catch (e: Exception) {

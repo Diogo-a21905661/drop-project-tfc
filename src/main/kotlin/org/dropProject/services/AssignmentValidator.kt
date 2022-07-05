@@ -43,7 +43,7 @@ import java.io.FileReader
  */
 @Service
 @Scope("prototype")
-class AssignmentValidator {
+abstract class AssignmentValidator {
 
     enum class InfoType { INFO, WARNING, ERROR }
 
@@ -56,198 +56,13 @@ class AssignmentValidator {
     val testMethods = mutableListOf<String>()
 
     /**
-     * Validates the [Assignment].
+     * Picks between which [Assignment] validator we will be using.
+     * That depends on which compiler is being used
      *
      * @param assignmentFolder is a File, representing the file system folder where the assignment's code is stored
      * @param assignment is the Assignment to validate
      */
-    fun validate(assignmentFolder: File, assignment: Assignment) {
-
-        val pomFile = File(assignmentFolder, "pom.xml")
-        if (!pomFile.exists()) {
-            report.add(Info(InfoType.ERROR, "Assignment must have a pom.xml.",
-                    "Check <a href=\"https://github.com/palves-ulht/sampleJavaAssignment\">" +
-                            "https://github.com/palves-ulht/sampleJavaAssignment</a> for an example"))
-            return
-        } else {
-            report.add(Info(InfoType.INFO, "Assignment has a pom.xml"))
-        }
-
-        val reader = MavenXpp3Reader()
-        val model = reader.read(FileReader(pomFile))
-
-        validateCurrentUserIdSystemVariable(assignmentFolder, model)
-        validateUntrimmedStacktrace(model)
-        validateProperTestClasses(assignmentFolder, assignment)
-        if (assignment.maxMemoryMb != null) {
-            validatePomPreparedForMaxMemory(model)
-        }
-        validatePomPreparedForCoverage(model, assignment)
-    }
-
-    // tests that the assignment is ready to use the system property "dropProject.currentUserId"
-    private fun validateCurrentUserIdSystemVariable(assignmentFolder: File, pomModel: Model) {
-
-        // first check if the assignment code is referencing this property
-        if (searchAllSourceFilesWithinFolder(assignmentFolder, "System.getProperty(\"dropProject.currentUserId\")")) {
-            val surefirePlugin = pomModel.build.plugins.find { it.artifactId == "maven-surefire-plugin" }
-            if (surefirePlugin == null ||
-                    surefirePlugin.configuration == null ||
-                    !surefirePlugin.configuration.toString().contains("<argLine>\${dp.argLine}</argLine>")) {
-
-                addWarningAboutSurefireWithArgline("POM file is not prepared to use the 'dropProject.currentUserId' system property")
-
-            } else {
-                report.add(Info(InfoType.INFO, "POM file is prepared to set the 'dropProject.currentUserId' system property"))
-            }
-        } else {
-            report.add(Info(InfoType.INFO, "Doesn't use the 'dropProject.currentUserId' system property"))
-        }
-
-    }
-
-    // tests that the surefire-plugin is showing full stacktraces
-    private fun validateUntrimmedStacktrace(pomModel: Model) {
-
-        val surefirePlugin = pomModel.build.plugins.find { it.artifactId == "maven-surefire-plugin" }
-        if (surefirePlugin != null && surefirePlugin.version != null) {
-
-            if (surefirePlugin.configuration == null ||
-                    !surefirePlugin.configuration.toString().contains("<trimStackTrace>false</trimStackTrace>")) {
-
-                report.add(Info(InfoType.WARNING, "POM file is not configured to prevent stacktrace trimming on junit errors",
-                        "By default, the maven-surefire-plugin trims stacktraces (version >= 2.2), which may " +
-                                "complicate students efforts to understand junit reports. " +
-                                "It is suggested to set the 'trimStackStrace' flag to false, like this:<br/><pre>" +
-                                """
-                                    |<plugin>
-                                    |   <groupId>org.apache.maven.plugins</groupId>
-                                    |   <artifactId>maven-surefire-plugin</artifactId>
-                                    |   <version>2.19.1</version>
-                                    |   <configuration>
-                                    |       ...
-                                    |       <trimStackTrace>false</trimStackTrace>
-                                    |   </configuration>
-                                    |</plugin>
-                                    """.trimMargin().toEscapedHtml()
-                                + "</pre>"
-                ))
-
-            } else {
-                report.add(Info(InfoType.INFO, "POM file is prepared to prevent stacktrace trimming on junit errors"))
-            }
-        } else {
-            report.add(Info(InfoType.INFO, "POM file is prepared to prevent stacktrace trimming on junit errors"))
-        }
-    }
-
-
-    private fun validatePomPreparedForMaxMemory(pomModel: Model) {
-        val surefirePlugin = pomModel.build.plugins.find { it.artifactId == "maven-surefire-plugin" }
-        if (surefirePlugin == null ||
-                surefirePlugin.configuration == null ||
-                !surefirePlugin.configuration.toString().contains("<argLine>\$\\{dp.argLine\\}</argLine>")) {
-
-            addWarningAboutSurefireWithArgline("POM file is not prepared to set the max memory available")
-
-        } else {
-            report.add(Info(InfoType.INFO, "POM file is prepared to define the max memory for each submission"))
-        }
-    }
-
-    /**
-     * Performs [Assignment] validations related with the calculation the test coverage of student's own tests.
-     * Namely, it validates if an assignment that is configured to calculate the coverage contains the necessary plugins
-     * in the respective pom.xml file (and vice versa).
-     *
-     * @param pomModel is a Model
-     * @param assignment is the Assignment to validate
-     */
-    private fun validatePomPreparedForCoverage(pomModel: Model, assignment: Assignment) {
-        val surefirePlugin = pomModel.build.plugins.find { it.artifactId == "jacoco-maven-plugin" }
-        val packagePath = assignment.packageName?.replace(".","/").orEmpty()
-        if (surefirePlugin != null) {
-            if (assignment.calculateStudentTestsCoverage) {
-                if (surefirePlugin.configuration == null ||
-                        !surefirePlugin.configuration.toString().contains("<include>${packagePath}/*</include>")) {
-                    report.add(Info(InfoType.ERROR, "jacoco-maven-plugin (used for coverage) has a configuration problem",
-                            "The jacoco-maven-plugin must include a configuration that includes only the classes of " +
-                                    "the assignment package. Please fix this in your assignment POM file. " +
-                                    "Configuration example:<br/><pre>" +
-                                    """
-                                    |<plugin>
-                                    |    <groupId>org.jacoco</groupId>
-                                    |    <artifactId>jacoco-maven-plugin</artifactId>
-                                    |    <version>0.8.2</version>
-                                    |    <configuration>
-                                    |        <includes>
-                                    |            <include>${packagePath}/*</include>
-                                    |        </includes>
-                                    |    </configuration>
-                                    |    <executions>
-                                    |        <execution>
-                                    |            <goals>
-                                    |                <goal>prepare-agent</goal>
-                                    |            </goals>
-                                    |        </execution>
-                                    |        <execution>
-                                    |            <id>generate-code-coverage-report</id>
-                                    |            <phase>test</phase>
-                                    |            <goals>
-                                    |                <goal>report</goal>
-                                    |            </goals>
-                                    |        </execution>
-                                    |    </executions>
-                                    |</plugin>
-                                    """.trimMargin().toEscapedHtml()
-                                    + "</pre>"
-
-                    ))
-                } else {
-                    report.add(Info(InfoType.INFO, "POM file is prepared to calculate coverage"))
-                }
-            } else {
-                report.add(Info(InfoType.WARNING, "POM file includes a plugin to calculate coverage but the " +
-                        "assignment has the flag 'Calculate coverage of student tests?' set to 'No'",
-                        "For performance reasons, you should remove the jacoco-maven-plugin from your POM file"))
-            }
-        } else {
-            if (assignment.calculateStudentTestsCoverage) {
-                report.add(Info(InfoType.ERROR, "POM file is not prepared to calculate coverage",
-                        "The assignment has the flag 'Calculate coverage of student tests?' set to 'Yes' " +
-                                "but the POM file doesn't include the jacoco-maven-plugin. Please add the following " +
-                                "lines to your pom file:<br/><pre>" +
-                                """
-                                    |<plugin>
-                                    |    <groupId>org.jacoco</groupId>
-                                    |    <artifactId>jacoco-maven-plugin</artifactId>
-                                    |    <version>0.8.2</version>
-                                    |    <configuration>
-                                    |        <includes>
-                                    |            <include>${packagePath}/*</include>
-                                    |        </includes>
-                                    |    </configuration>
-                                    |    <executions>
-                                    |        <execution>
-                                    |            <goals>
-                                    |                <goal>prepare-agent</goal>
-                                    |            </goals>
-                                    |        </execution>
-                                    |        <execution>
-                                    |            <id>generate-code-coverage-report</id>
-                                    |            <phase>test</phase>
-                                    |            <goals>
-                                    |                <goal>report</goal>
-                                    |            </goals>
-                                    |        </execution>
-                                    |    </executions>
-                                    |</plugin>
-                                """.trimMargin().toEscapedHtml()
-                                + "</pre>"))
-                println("")
-            }
-        }
-    }
+    abstract fun validate(assignmentFolder: File, assignment: Assignment)
 
     /**
      * Validates an [Assignment]'s test files to determine if the test classes are respecting the expected
@@ -256,7 +71,7 @@ class AssignmentValidator {
      * @param assignmentFolder is a File, representing the file system folder where the assignment's code is stored
      * @param assignment is the Assignment to validate
      */
-    private fun validateProperTestClasses(assignmentFolder: File, assignment: Assignment) {
+    protected fun validateProperTestClasses(assignmentFolder: File, assignment: Assignment) {
 
         var correctlyPrefixed = true
 
@@ -350,33 +165,14 @@ class AssignmentValidator {
                 report.add(Info(InfoType.INFO, "You have hidden tests. ${message}"))
             }
         }
-
     }
 
-    private fun searchAllSourceFilesWithinFolder(folder: File, text: String): Boolean {
+    //Get all code files within folder
+    protected fun searchAllSourceFilesWithinFolder(folder: File, text: String): Boolean {
         return folder.walkTopDown()
                 .filter { it -> it.name.endsWith(".java") || it.name.endsWith(".kt") }
                 .any {
                     it.readText().contains(text)
                 }
     }
-
-    private fun addWarningAboutSurefireWithArgline(message: String) {
-        report.add(Info(InfoType.WARNING, message,
-                "The system property 'dropProject.currentUserId' only works if you add the following lines to your pom file:<br/><pre>" +
-                        """
-                        |<plugin>
-                        |   <groupId>org.apache.maven.plugins</groupId>
-                        |   <artifactId>maven-surefire-plugin</artifactId>
-                        |   <version>2.19.1</version>
-                        |   <configuration>
-                        |      <argLine>$\{dp.argLine}</argLine>
-                        |   </configuration>
-                        |</plugin>
-                        """.trimMargin().replace("\\","").toEscapedHtml()
-                        + "</pre>"
-
-        ))
-    }
-
 }

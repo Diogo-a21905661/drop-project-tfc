@@ -276,12 +276,14 @@ class BuildWorker(
         if (assignment.compiler == Compiler.MAVEN) {
             LOG.info("Started maven invocation to check ${assignment.id}");
 
+            //Maven result
             val mavenResult = mavenInvoker.run(assignmentFolder, principalName, assignment.maxMemoryMb)
 
             LOG.info("Finished maven invocation to check ${assignment.id}");
-
             if (!mavenResult.expiredByTimeout) {
                 LOG.info("Maven invoker OK for ${assignment.id}")
+
+                LOG.info("Output Lines == ${mavenResult.outputLines}")
                 return buildReportBuilder.build(mavenResult.outputLines, assignmentFolder.absolutePath, assignment)
             } else {
                 LOG.info("Maven invoker aborted by timeout for ${assignment.id}")
@@ -289,10 +291,10 @@ class BuildWorker(
         } else { //NEW: Assignment is Gradle
             LOG.info("Started gradle invocation to check ${assignment.id}");
 
+            //Gradle result
             val gradleResult = gradleInvoker.run(assignmentFolder, principalName, assignment.maxMemoryMb)
 
             LOG.info("Finished gradle invocation to check ${assignment.id}");
-
             if (!gradleResult.expiredByTimeout) {
                 LOG.info("Gradle invoker OK for ${assignment.id}")
                 return buildReportBuilder.build(gradleResult.outputLines, assignmentFolder.absolutePath, assignment)

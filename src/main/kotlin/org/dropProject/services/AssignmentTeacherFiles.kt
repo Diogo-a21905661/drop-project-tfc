@@ -117,8 +117,15 @@ class AssignmentTeacherFiles(val buildWorker: BuildWorker,
 
         val assignmentFolder = File(assignmentsRootLocation, assignment.gitRepositoryFolder)
 
-        val assignmentValidator = applicationContext.getBean(AssignmentValidator::class.java)
+        //Use the validator depending on the compiler
+        val assignmentValidator: AssignmentValidator
+        if (assignment.compiler == Compiler.MAVEN) {
+            assignmentValidator = applicationContext.getBean(AssignmentValidatorMaven::class.java)
+        } else {
+            assignmentValidator = applicationContext.getBean(AssignmentValidatorGradle::class.java)
+        }
 
+        //Run validator (function is abstract between both classes)
         assignmentValidator.validate(assignmentFolder, assignment)
         val report = assignmentValidator.report
 

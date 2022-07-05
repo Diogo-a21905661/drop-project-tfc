@@ -84,8 +84,11 @@ data class BuildReport(val mavenOutputLines: List<String>,
      */
     fun compilationErrors() : List<String> {
 
+        LOG.info("Started checking compilation errors for project.")
+
         var errors = ArrayList<String>()
 
+        /* Android is still in Kotlin */
         val folder = if (assignment.language == Language.JAVA) "java" else "kotlin"
 
         // parse compilation errors
@@ -155,8 +158,11 @@ data class BuildReport(val mavenOutputLines: List<String>,
            when (assignment.language) {
                Language.JAVA -> errors.add("Invalid call to System.exit(). Please remove this instruction")
                Language.KOTLIN ->  errors.add("Invalid call to System.exit() or exitProcess(). Please remove this instruction")
+               Language.ANDROID ->  errors.add("Invalid call to System.exit() or exitProcess(). Please remove this instruction")
             }
-        }
+            }
+
+        LOG.info("Finished checking for build errors -> ${errors}")
 
         return errors
     }
