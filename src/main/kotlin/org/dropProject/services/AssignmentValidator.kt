@@ -43,7 +43,7 @@ import java.io.FileReader
  */
 @Service
 @Scope("prototype")
-abstract class AssignmentValidator {
+open class AssignmentValidator {
 
     enum class InfoType { INFO, WARNING, ERROR }
 
