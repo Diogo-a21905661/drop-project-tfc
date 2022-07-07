@@ -26,9 +26,10 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.io.File
 import java.io.FileReader
+import org.dropProject.dao.*
 import java.io.StringWriter
 import java.util.*
-import org.gradle.tooling.* //TODO: Import gradle tooling API
+import org.gradle.tooling.*
 
 /**
  * NEW: Added to perform Gradle tasks
@@ -55,9 +56,7 @@ public class GradleInvoker {
      *
      * @return a Result
      */
-    fun run(projectFolder: File, principalName: String?, maxMemoryMb: Int?) : Result {
-        LOG.info("Running gradle invoker")
-
+    fun run(projectFolder: File, principalName: String?, assignment: Assignment) : Result {
         //Check if repository already exists
         /* 
         if (!File(repository).exists()) {
@@ -68,26 +67,36 @@ public class GradleInvoker {
         }
         */
 
-        LOG.info("Started gradle invoker")
-
         try {
             val connection = GradleConnector.newConnector().forProjectDirectory(projectFolder).connect()
             val build: BuildLauncher = connection.newBuild()
 
-            //select tasks to run (changed test to compileTestKotlin)
-            build.forTasks("clean", "compileKotlin", "compileTestKotlin")
+            //Check which language is being used and select tasks to run
+            if (assignment.language == Language.KOTLIN) {
+                build.forTasks("clean", "compileKotlin", "compileTestKotlin")
+            } else {
+                //Testing if task "test" works (test, compileTestJava)
+                build.forTasks("clean", "compileJava", "test")
+            }
 
             //include some build arguments:
             /*
-            //configure the standard input:
-            build.setStandardInput(ByteArrayInputStream("consume this!".toByteArray()))
             //in case you want the build to use java different than default:
             build.setJavaHome(File("/path/to/java"))
+            //configure the standard input:
+            build.setStandardInput(ByteArrayInputStream("consume this!".toByteArray()))
             //if your build needs crazy amounts of memory:
             build.setJvmArguments("-Xmx2048m", "-XX:MaxPermSize=512m")
             */
 
-            //if you want to listen to the progress events:
+            //if you want to listen to the progress events: 
+            /*
+            build.addProgressListener(ProgressListener {
+                LOG.info("progress ${it.description}")
+            })
+            */
+
+            //if you want to listen to the progress events: 
             build.addProgressListener(ProgressListener {
                 LOG.info("progress ${it.description}")
             })

@@ -149,6 +149,10 @@ class MavenInvoker {
             }
         }
 
+        //Must replicate these results
+        LOG.info("Result Code is {}", result.exitCode)
+        LOG.info("Output Lines is {}", outputLines)
+
         return Result(resultCode = result.exitCode, outputLines = outputLines)
     }
 

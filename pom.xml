@@ -34,15 +34,6 @@
 		<orchid.version>0.21.0</orchid.version>
 	</properties>
 
-	<!-- Define Repositories -->
-	<!-- Gradle Repository (Might not be needed)
-	<repositories>
-		<repository>
-		<id>org.gradle</id>
-		<url>https://repo.gradle.org/gradle/libs-releases/</url>
-		</repository>
-  	</repositories> -->
-
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>

@@ -100,7 +100,7 @@ class BuildWorker(
                 LOG.info("[${authorsStr}] Started gradle invocation")
             }
 
-            result = gradleInvoker.run(projectFolder, realPrincipalName, assignment.maxMemoryMb)
+            result = gradleInvoker.run(projectFolder, realPrincipalName, assignment)
 
             LOG.info("[${authorsStr}] Finished gradle invocation")
         }
@@ -292,7 +292,7 @@ class BuildWorker(
             LOG.info("Started gradle invocation to check ${assignment.id}");
 
             //Gradle result
-            val gradleResult = gradleInvoker.run(assignmentFolder, principalName, assignment.maxMemoryMb)
+            val gradleResult = gradleInvoker.run(assignmentFolder, principalName, assignment)
 
             LOG.info("Finished gradle invocation to check ${assignment.id}");
             if (!gradleResult.expiredByTimeout) {
