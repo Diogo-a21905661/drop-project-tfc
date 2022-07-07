@@ -19,8 +19,8 @@
  */
 package org.dropProject.services
 
-import org.dropProject.dao.Assignment
-import org.dropProject.dao.TestVisibility
+import org.dropProject.dao.*
+import org.dropProject.services.*
 import org.dropProject.forms.SubmissionMethod
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -35,7 +35,7 @@ import org.springframework.test.context.junit4.SpringRunner
 
 @RunWith(SpringRunner::class)
 @ActiveProfiles("test")
-class TestAssignmentValidator {
+class TestAssignmentValidatorMaven {
 
     @Autowired
     lateinit var resourceLoader: ResourceLoader
@@ -45,12 +45,12 @@ class TestAssignmentValidator {
     val sampleAssignmentsRootFolder = "src/test/sampleAssignments"
 
     val dummyAssignment = Assignment(id = "dummy", name = "", gitRepositoryUrl = "",
-            gitRepositoryFolder = "", ownerUserId = "p4997", submissionMethod = SubmissionMethod.UPLOAD,
+            gitRepositoryFolder = "", ownerUserId = "p4997", submissionMethod = SubmissionMethod.UPLOAD, compiler = Compiler.MAVEN,
             hiddenTestsVisibility = TestVisibility.HIDE_EVERYTHING)
 
     @Before
     fun initAssignmentValidator() {
-        assignmentValidator = AssignmentValidator()
+        assignmentValidator = AssignmentValidatorMaven()
     }
 
     @Test
