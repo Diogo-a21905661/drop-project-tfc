@@ -65,11 +65,11 @@ class TestBuildReport {
 
         val mavenOutputLines = resourceLoader.getResource("file:src/test/sampleMavenOutputs/fatalError1.txt").file.readLines()
 
-        val buildReport = buildReportBuilder.build(mavenOutputLines,
+        val buildReport = buildReportBuilder.build(outputLines,
                 "/Users/pedroalves/projects/Lusofona/DropProject/DropProject/mavenized-projects-test/projectSampleJavaAssignmentNOK-mavenized",
                 dummyJavaAssignment)
 
-        assertTrue(buildReport.mavenExecutionFailed())
+        assertTrue(buildReport.executionFailed())
     }
 
     @Test
@@ -81,7 +81,7 @@ class TestBuildReport {
                 "/srv/drop-project/mavenized-projects/1540410598559-Archive-mavenized",
                 dummyJavaAssignment)
 
-        assertTrue(buildReport.mavenExecutionFailed())
+        assertTrue(buildReport.executionFailed())
 
     }
 
@@ -94,7 +94,7 @@ class TestBuildReport {
                 "/srv/drop-project/mavenized-projects/1540285383565-miniTest1-mavenized",
                 dummyJavaAssignment)
 
-        assertTrue(!buildReport.mavenExecutionFailed())
+        assertTrue(!buildReport.executionFailed())
         assertEquals(0, buildReport.compilationErrors().size)
         assertEquals(10, buildReport.checkstyleErrors().size)
     }
@@ -108,7 +108,7 @@ class TestBuildReport {
                 "/srv/drop-project/mavenized-projects/1540285463411-MiniTeste1-mavenized",
                 dummyJavaAssignment)
 
-        assertTrue(!buildReport.mavenExecutionFailed())
+        assertTrue(!buildReport.executionFailed())
         assertEquals(28, buildReport.compilationErrors().size)
         assertEquals(0, buildReport.checkstyleErrors().size)
     }
@@ -122,7 +122,7 @@ class TestBuildReport {
                 "/Users/pedroalves/projects/Lusofona/DropProject/DropProject/mavenized-projects-test/projectUnexpectedCharacter-mavenized",
                 dummyJavaAssignment)
 
-        assertTrue(!buildReport.mavenExecutionFailed())
+        assertTrue(!buildReport.executionFailed())
         assertEquals(2, buildReport.compilationErrors().size)
         assertEquals(0, buildReport.checkstyleErrors().size)
     }
@@ -136,7 +136,7 @@ class TestBuildReport {
                 "/srv/drop-project/mavenized-projects/1540285868304-miniTeste-mavenized",
                 dummyJavaAssignment)
 
-        assertTrue(!buildReport.mavenExecutionFailed())
+        assertTrue(!buildReport.executionFailed())
         assertEquals(0, buildReport.compilationErrors().size)
         assertEquals(0, buildReport.checkstyleErrors().size)
     }
@@ -150,7 +150,7 @@ class TestBuildReport {
                 "/srv/drop-project/mavenized-projects/1540282987575-miniteste1-mavenized",
                 dummyJavaAssignment)
 
-        assertTrue(!buildReport.mavenExecutionFailed())
+        assertTrue(!buildReport.executionFailed())
         assertEquals(0, buildReport.compilationErrors().size)
         assertEquals(0, buildReport.checkstyleErrors().size)
     }
@@ -164,7 +164,7 @@ class TestBuildReport {
                 "/srv/drop-project/mavenized-projects/1540829973889-test-mavenized",
                 dummyKotlinAssignment)
 
-        assertTrue(!buildReport.mavenExecutionFailed())
+        assertTrue(!buildReport.executionFailed())
         assertEquals(2, buildReport.compilationErrors().size)
         assertEquals(0, buildReport.checkstyleErrors().size)
         assertEquals("Main.kt: (2, 30) Expecting '\"'", buildReport.compilationErrors()[0])
@@ -180,7 +180,7 @@ class TestBuildReport {
                 "/srv/drop-project/mavenized-projects/1540768632768-fp-miniteste-exemplo-mavenized",
                 dummyKotlinAssignment)
 
-        assertTrue(!buildReport.mavenExecutionFailed())
+        assertTrue(!buildReport.executionFailed())
         assertEquals(0, buildReport.compilationErrors().size)
         assertEquals(0, buildReport.checkstyleErrors().size)
     }
@@ -194,7 +194,7 @@ class TestBuildReport {
                 "/srv/drop-project/mavenized-projects/1540857289260-mini_teste_pratico-mavenized",
                 dummyKotlinAssignment)
 
-        assertTrue(!buildReport.mavenExecutionFailed())
+        assertTrue(!buildReport.executionFailed())
         assertEquals(0, buildReport.compilationErrors().size)
         assertEquals(0, buildReport.checkstyleErrors().size)
     }
@@ -207,7 +207,7 @@ class TestBuildReport {
                 "/srv/drop-project/mavenized-projects/1592587286410-Pedra, Papel, Tesoura-mavenized-for-rebuild",
                 dummyKotlinAssignment)
 
-        assertTrue(buildReport.mavenExecutionFailed())
+        assertTrue(buildReport.executionFailed())
 
         // TODO: devia ter uma flag "fatalError" quando um plugin rebenta
     }
@@ -224,7 +224,7 @@ class TestBuildReport {
                     "someMavenizedProj",
                     dummyKotlinAssignment)
 
-            assertTrue(!buildReport.mavenExecutionFailed())
+            assertTrue(!buildReport.executionFailed())
             assertEquals(0, buildReport.compilationErrors().size)
             assertEquals("$it", 5, buildReport.checkstyleErrors().size)
         }
@@ -238,7 +238,7 @@ class TestBuildReport {
                 "someMavenizedProj",
                 dummyKotlinAssignment)
 
-        assertTrue(!buildReport.mavenExecutionFailed())
+        assertTrue(!buildReport.executionFailed())
         assertEquals(0, buildReport.compilationErrors().size)
         assertEquals(8, buildReport.checkstyleErrors().size)
     }
@@ -252,7 +252,7 @@ class TestBuildReport {
                 "someMavenizedProj",
                 dummyJavaAssignment)
 
-        assertTrue(!buildReport.mavenExecutionFailed())
+        assertTrue(!buildReport.executionFailed())
         assertEquals(1, buildReport.compilationErrors().size)
         assertEquals("Invalid call to System.exit(). Please remove this instruction", buildReport.compilationErrors()[0])
     }

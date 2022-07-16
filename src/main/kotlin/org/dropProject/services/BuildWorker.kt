@@ -406,9 +406,6 @@ class BuildWorker(
             if (!gradleResult.expiredByTimeout) {
                 LOG.info("Gradle invoker OK for ${assignment.id}")
 
-                //Get tests of assignment
-
-
                 return buildReportBuilder.build(gradleResult.outputLines, assignmentFolder.absolutePath, assignment)
             } else {
                 LOG.info("Gradle invoker aborted by timeout for ${assignment.id}")
@@ -417,5 +414,4 @@ class BuildWorker(
 
         return null
     }
-
 }

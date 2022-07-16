@@ -815,7 +815,7 @@ class UploadControllerTests {
         assertEquals("junit should have total 4 tests", 4, summary[3].reportGoal)
 
         val buildResult = reportResult.modelAndView!!.modelMap["buildReport"] as BuildReport
-        println("buildResult = ${buildResult.mavenOutput()}")
+        println("buildResult = ${buildResult.getOutput()}")
         assert(buildResult.hasJUnitErrors() == true)
         assert(buildResult.junitSummary()!!.startsWith("Tests run: 4, Failures: 2, Errors: 0, Time elapsed"))
         assertNotNull(buildResult.jUnitErrors())
