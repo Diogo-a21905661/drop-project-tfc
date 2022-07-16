@@ -64,8 +64,9 @@ class BuildWorker(
 
     /**
      * NEW: Added Gradle compiler to the build worker
-     * Checks a [Submission], performing all relevant build and evalutation steps (for example, Compilation) and storing
+     * Checks a [Submission], performing all relevant build and evaluation steps (for example, Compilation) and storing
      * each step's results in the database.
+     * Only used for Submission
      *
      * @param projectFolder is a File
      * @param authorsStr is a String
@@ -79,10 +80,10 @@ class BuildWorker(
     fun checkProject(projectFolder: File, authorsStr: String, submission: Submission,
                           principalName: String?, dontChangeStatusDate: Boolean = false, rebuildByTeacher: Boolean = false) {
         val assignment = assignmentRepository.findById(submission.assignmentId).orElse(null)
+        val realPrincipalName = if (rebuildByTeacher) submission.submitterUserId else principalName
 
         //NEW: Added condition to check if either Maven or Gradle are used
         var result: Result = Result()
-        val realPrincipalName = if (rebuildByTeacher) submission.submitterUserId else principalName
         if (assignment.compiler == Compiler.MAVEN) {
             if (assignment.maxMemoryMb != null) {
                 LOG.info("[${authorsStr}] Started maven invocation (max: ${assignment.maxMemoryMb}Mb)")
@@ -90,9 +91,11 @@ class BuildWorker(
                 LOG.info("[${authorsStr}] Started maven invocation")
             }
 
+            //Run invoker of compiler (clean, compile, test)
             result = mavenInvoker.run(projectFolder, realPrincipalName, assignment.maxMemoryMb)
-    
-            LOG.info("[${authorsStr}] Finished maven invocation")
+
+            //Create build report for Maven
+            buildMaven(result, assignment, submission, projectFolder, realPrincipalName, dontChangeStatusDate, rebuildByTeacher)
         } else { //Assignment type is Gradle
             if (assignment.maxMemoryMb != null) {
                 LOG.info("[${authorsStr}] Started gradle invocation (max: ${assignment.maxMemoryMb}Mb)")
@@ -100,11 +103,33 @@ class BuildWorker(
                 LOG.info("[${authorsStr}] Started gradle invocation")
             }
 
+            //Run invoker of compiler (clean, compile, test)
             result = gradleInvoker.run(projectFolder, realPrincipalName, assignment)
 
-            LOG.info("[${authorsStr}] Finished gradle invocation")
+            //Get assignment tests based on result
+            getTestsFromOutput(result)
+
+            //Create build report for Gradle
+            buildGradle(result, assignment, submission, projectFolder, realPrincipalName, dontChangeStatusDate, rebuildByTeacher)
         }
 
+        //Part is functional for both compilers
+        submission.gitSubmissionId?.let {
+            gitSubmissionId ->
+                val gitSubmission = gitSubmissionRepository.getById(gitSubmissionId)
+                gitSubmission.lastSubmissionId = submission.id
+        }
+
+        submissionRepository.save(submission)
+    }
+
+    private fun getTestsFromOutput(result: Result) {
+        LOG.info("Output is: ${result.outputLines}")
+    }
+
+    //Create build report for Maven
+    private fun buildMaven(result: Result, assignment: Assignment, submission: Submission, 
+                        projectFolder: File, realPrincipalName: String?, dontChangeStatusDate: Boolean,  rebuildByTeacher: Boolean) {
         // check result for errors (expired, too much output)
         when {
             result.expiredByTimeout -> submission.setStatus(SubmissionStatus.ABORTED_BY_TIMEOUT,
@@ -112,14 +137,13 @@ class BuildWorker(
             result.tooMuchOutput() -> submission.setStatus(SubmissionStatus.TOO_MUCH_OUTPUT,
                                                                     dontUpdateStatusDate = dontChangeStatusDate)
             else -> { // get build report
-                LOG.info("[${authorsStr}] Invoker OK")
                 val buildReport = buildReportBuilder.build(result.outputLines, projectFolder.absolutePath,
                         assignment, submission)
 
                 // clear previous indicators except PROJECT_STRUCTURE
                 submissionReportRepository.deleteBySubmissionIdExceptProjectStructure(submission.id)
 
-                if (!buildReport.mavenExecutionFailed()) {
+                if (!buildReport.executionFailed()) {
 
                     submissionReportRepository.save(SubmissionReport(submissionId = submission.id,
                             reportKey = Indicator.COMPILATION.code, reportValue = if (buildReport.compilationErrors().isEmpty()) "OK" else "NOK"))
@@ -136,8 +160,8 @@ class BuildWorker(
                         // submissionReportRepository.save(SubmissionReport(submissionId = submission.id,
                         // reportKey = "Code Quality (PMD)", reportValue = if (buildReport.PMDerrors().isEmpty()) "OK" else "NOK"))
 
+                        //Check if assignment accepts student tests
                         if (assignment.acceptsStudentTests) {
-
                             val junitSummary = buildReport.junitSummaryAsObject(TestType.STUDENT)
                             val indicator =
                                     if (buildReport.hasJUnitErrors(TestType.STUDENT) == true) {
@@ -178,7 +202,7 @@ class BuildWorker(
 
                 //TODO: Build report search for maven output? What about gradle?
                 val buildReportDB = buildReportRepository.save(org.dropProject.dao.BuildReport(
-                        buildReport = buildReport.mavenOutput()))
+                        buildReport = buildReport.getOutput()))
                 submission.buildReportId = buildReportDB.id
 
                 // store the junit reports in the DB
@@ -206,11 +230,11 @@ class BuildWorker(
                             }
 
 
-                    LOG.info("[${authorsStr}] Started maven invocation again (for coverage)")
+                    LOG.info("Started maven invocation again (for coverage)")
 
                     val mavenResultCoverage = mavenInvoker.run(projectFolder, realPrincipalName, assignment.maxMemoryMb)
                     if (!mavenResultCoverage.expiredByTimeout) {
-                        LOG.info("[${authorsStr}] Finished maven invocation (for coverage)")
+                        LOG.info("Finished maven invocation (for coverage)")
 
                         // check again the result of the tests
                         val buildReportCoverage = buildReportBuilder.build(result.outputLines, projectFolder.absolutePath,
@@ -252,20 +276,116 @@ class BuildWorker(
                 }
             }
         }
+    }
 
-        submission.gitSubmissionId?.let {
-            gitSubmissionId ->
-                val gitSubmission = gitSubmissionRepository.getById(gitSubmissionId)
-                gitSubmission.lastSubmissionId = submission.id
+    //Create build report for Gradle
+    private fun buildGradle(result: Result, assignment: Assignment, submission: Submission, 
+                        projectFolder: File, realPrincipalName: String?, dontChangeStatusDate: Boolean,  rebuildByTeacher: Boolean) {
+        // check result for errors (expired, too much output)
+        when {
+            result.expiredByTimeout -> submission.setStatus(SubmissionStatus.ABORTED_BY_TIMEOUT,
+                                                                    dontUpdateStatusDate = dontChangeStatusDate)
+            result.tooMuchOutput() -> submission.setStatus(SubmissionStatus.TOO_MUCH_OUTPUT,
+                                                                    dontUpdateStatusDate = dontChangeStatusDate)
+            else -> { 
+
+                // get build report
+                val buildReport = buildReportBuilder.build(result.outputLines, projectFolder.absolutePath,
+                        assignment, submission)
+
+                // clear previous indicators except PROJECT_STRUCTURE
+                submissionReportRepository.deleteBySubmissionIdExceptProjectStructure(submission.id)
+
+                //Check if we got any fatal errors
+                if (!buildReport.executionFailed()) {
+                    //if not then submission can be added
+                    submissionReportRepository.save(SubmissionReport(submissionId = submission.id,
+                            reportKey = Indicator.COMPILATION.code, reportValue = if (buildReport.compilationErrors().isEmpty()) "OK" else "NOK"))
+
+                    //Check if there are any project compilation errors
+                    if (buildReport.compilationErrors().isEmpty()) {
+                        if (buildReport.checkstyleValidationActive()) {
+                            submissionReportRepository.save(SubmissionReport(submissionId = submission.id,
+                                    reportKey = Indicator.CHECKSTYLE.code, reportValue = if (buildReport.checkstyleErrors().isEmpty()) "OK" else "NOK"))
+                        }
+
+                        //Check student tests
+                        if (assignment.acceptsStudentTests) {
+                            LOG.info("Checked for student tests!")
+
+                            val junitSummary = buildReport.junitSummaryAsObject(TestType.STUDENT)
+                            val indicator =
+                                    if (buildReport.hasJUnitErrors(TestType.STUDENT) == true) {
+                                        "NOK"
+                                    } else if (junitSummary?.numTests == null || junitSummary.numTests < assignment.minStudentTests!!) {
+                                        // student hasn't implemented enough tests
+                                        "Not Enough Tests"
+                                    } else {
+                                        "OK"
+                                    }
+
+                            submissionReportRepository.save(SubmissionReport(submissionId = submission.id,
+                                    reportKey = Indicator.STUDENT_UNIT_TESTS.code,
+                                    reportValue = indicator,
+                                    reportProgress = junitSummary?.progress,
+                                    reportGoal = junitSummary?.numTests))   
+                        }
+
+                        //Check if teacher tests have errors
+                        if (buildReport.hasJUnitErrors(TestType.TEACHER) != null) {
+                            val junitSummary = buildReport.junitSummaryAsObject(TestType.TEACHER)
+
+                            submissionReportRepository.save(SubmissionReport(submissionId = submission.id,
+                                    reportKey = Indicator.TEACHER_UNIT_TESTS.code,
+                                    reportValue = if (buildReport.hasJUnitErrors(TestType.TEACHER) == true) "NOK" else "OK",
+                                    reportProgress = junitSummary?.progress,
+                                    reportGoal = junitSummary?.numTests))
+                        }
+
+                        //Check if hidden tests have errors
+                        if (buildReport.hasJUnitErrors(TestType.HIDDEN) != null) {
+                            val junitSummary = buildReport.junitSummaryAsObject(TestType.HIDDEN)
+
+                            submissionReportRepository.save(SubmissionReport(submissionId = submission.id,
+                                    reportKey = Indicator.HIDDEN_UNIT_TESTS.code,
+                                    reportValue = if (buildReport.hasJUnitErrors(TestType.HIDDEN) == true) "NOK" else "OK",
+                                    reportProgress = junitSummary?.progress,
+                                    reportGoal = junitSummary?.numTests))
+                        }
+                    }
+                }
+
+                //Get report output
+                val buildReportDB = buildReportRepository.save(org.dropProject.dao.BuildReport(buildReport = buildReport.getOutput()))
+                submission.buildReportId = buildReportDB.id
+
+                //Store the report in the DB
+                File("${projectFolder}/target/surefire-reports")
+                        .walkTopDown()
+                        .filter { it -> it.name.endsWith(".xml") }
+                        .forEach {
+                            val report = JUnitReport(submissionId = submission.id, fileName = it.name,
+                                    xmlReport = it.readText(Charset.forName("UTF-8")))
+                            jUnitReportRepository.save(report)
+                        }
+
+                //TO DO: For now Gradle has no coverage report, have to add (take example from Maven)
+
+                //Set status of submission
+                if (!rebuildByTeacher) {
+                    submission.setStatus(SubmissionStatus.VALIDATED, dontUpdateStatusDate = dontChangeStatusDate)
+                } else {
+                    submission.setStatus(SubmissionStatus.VALIDATED_REBUILT, dontUpdateStatusDate = dontChangeStatusDate)
+                }
+            }
         }
-
-        submissionRepository.save(submission)
     }
 
     /**
      * NEW: Added Gradle check for LOG comparable to Maven
      * Checks an [Assignment], performing all the relevant steps and generates the respective [BuildReport].
-     *
+     * Used only in Assignment (when it is submitted)
+     * 
      * @param assignmentFolder is a File
      * @param assignment is an [Assignment]
      * @param principalName is a String
@@ -274,29 +394,21 @@ class BuildWorker(
      */
     fun checkAssignment(assignmentFolder: File, assignment: Assignment, principalName: String?) : BuildReport? {
         if (assignment.compiler == Compiler.MAVEN) {
-            LOG.info("Started maven invocation to check ${assignment.id}");
-
-            //Maven result
             val mavenResult = mavenInvoker.run(assignmentFolder, principalName, assignment.maxMemoryMb)
-
-            LOG.info("Finished maven invocation to check ${assignment.id}");
             if (!mavenResult.expiredByTimeout) {
                 LOG.info("Maven invoker OK for ${assignment.id}")
-
-                LOG.info("Output Lines == ${mavenResult.outputLines}")
                 return buildReportBuilder.build(mavenResult.outputLines, assignmentFolder.absolutePath, assignment)
             } else {
                 LOG.info("Maven invoker aborted by timeout for ${assignment.id}")
             }
-        } else { //NEW: Assignment is Gradle
-            LOG.info("Started gradle invocation to check ${assignment.id}");
-
-            //Gradle result
+        } else { //Assignment is Gradle
             val gradleResult = gradleInvoker.run(assignmentFolder, principalName, assignment)
-
-            LOG.info("Finished gradle invocation to check ${assignment.id}");
             if (!gradleResult.expiredByTimeout) {
                 LOG.info("Gradle invoker OK for ${assignment.id}")
+
+                //Get tests of assignment
+
+
                 return buildReportBuilder.build(gradleResult.outputLines, assignmentFolder.absolutePath, assignment)
             } else {
                 LOG.info("Gradle invoker aborted by timeout for ${assignment.id}")

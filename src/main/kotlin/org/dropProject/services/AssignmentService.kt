@@ -106,6 +106,7 @@ class AssignmentService(
     fun getMyAssignments(principal: Principal, archived: Boolean): List<Assignment> {
         val assignmentsOwns = assignmentRepository.findByOwnerUserId(principal.realName())
 
+        //Add assignment to authorized repository
         val assignmentsACL = assignmentACLRepository.findByUserId(principal.realName())
         val assignmentsAuthorized = ArrayList<Assignment>()
         for (assignmentACL in assignmentsACL) {

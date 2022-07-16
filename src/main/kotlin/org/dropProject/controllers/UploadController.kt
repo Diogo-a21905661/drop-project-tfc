@@ -235,13 +235,11 @@ class UploadController(
 
             return "student-git-form"
         }
-
-
     }
 
 
     /**
-     * TODO: Added Gradle upload method next to Maven upload method (Have to check other upload methods)
+     * TODO: Added Gradle upload method next to Maven upload method
      * Controller that handles requests for the actual file upload that delivers/submits the student's code.
      *
      * @param uploadForm is an [Uploadform]
@@ -258,6 +256,8 @@ class UploadController(
                @RequestParam("file") file: MultipartFile,
                principal: Principal,
                request: HttpServletRequest): ResponseEntity<String> {
+
+        LOG.info("Uploaded submission to assignment")
 
         if (bindingResult.hasErrors()) {
             return ResponseEntity("{\"error\": \"Internal error\"}", HttpStatus.INTERNAL_SERVER_ERROR);
@@ -348,7 +348,7 @@ class UploadController(
     }
 
     /**
-     * Builds and tests a [Submission].
+     * Builds and checks a [Submission].
      * NEW: Added if conditional to check if either Gradle or Maven were used as compiler
      * @property projectFolder is a File
      * @property assignment is the [Assignment] for which the submission is being made
@@ -366,6 +366,8 @@ class UploadController(
                                 principal: Principal?) {
         //Get errors for if project structure is with errors
         val projectStructureErrors = checkProjectStructure(projectFolder, assignment)
+
+        //Check if submission has errors
         if (!projectStructureErrors.isEmpty()) {
             LOG.info("[${authorsStr}] Project Structure NOK")
             submissionReportRepository.save(SubmissionReport(submissionId = submission.id,
@@ -378,15 +380,17 @@ class UploadController(
             submissionReportRepository.save(SubmissionReport(submissionId = submission.id,
                     reportKey = Indicator.PROJECT_STRUCTURE.code, reportValue = "OK"))
 
+            LOG.info("Standardizing submission for assignment ${submission.assignmentId}.)")
+
+            //Standardize project
             val standardizedProjectFolder = standardizeFolder(projectFolder, submission, assignment, teacherRebuild)
-           
-            //NEW: Check if Maven or Gradle is used for LOG info
             if (assignment.compiler == Compiler.MAVEN) {
                 LOG.info("[${authorsStr}] Mavenized to folder ${standardizedProjectFolder}")
             } else {
-                LOG.info("[${authorsStr}] used Gradle to folder ${standardizedProjectFolder}")
-            }
+                LOG.info("[${authorsStr}] used Gradle on folder ${standardizedProjectFolder}")
 
+            }
+    
             if (asyncExecutor is ThreadPoolTaskScheduler) {
                 LOG.info("asyncExecutor.activeCount = ${asyncExecutor.activeCount}")
             }
@@ -402,7 +406,8 @@ class UploadController(
         }
     }
 
-    //Check project structure (functions the same with gradle and maven projects)
+    //Check project structure (functions the same with gradle and maven projects) and return errors found
+    //In this case we dont check for file existence, as that is already done in the BuildWorker class
     private fun checkProjectStructure(projectFolder: File, assignment: Assignment): List<String> {
         val erros = ArrayList<String>()
         if (!File(projectFolder, "src").existsCaseSensitive()) {
@@ -415,10 +420,24 @@ class UploadController(
             erros.add("O projecto não contém uma pasta 'src/${packageName}'")
         }
 
-        //NEW: Android files are in Kotlin so we choose after checking with JAVA
+        //Check language (NEW: Added Gradle check)
         val mainFile = if (assignment.language == Language.JAVA) "Main.java" else "Main.kt"
-        if (!File(projectFolder, "src/${packageName}/${mainFile}").existsCaseSensitive()) {
-            erros.add("O projecto não contém o ficheiro ${mainFile} na pasta 'src/${packageName}'")
+        val mainLanguage = if (assignment.language == Language.JAVA) "java" else "kotlin"
+        if (assignment.compiler == Compiler.GRADLE) {
+            //Check if first file is language or package (full gradle file)
+            if (File(projectFolder, "src/${packageName}").existsCaseSensitive()) {
+                if (!File(projectFolder, "src/${packageName}/${mainFile}").existsCaseSensitive()) {
+                    erros.add("O projecto não contém o ficheiro ${mainFile} na pasta 'src/${packageName}'")
+                }
+            } else {
+                if (!File(projectFolder, "src/main/${mainLanguage}/${packageName}/${mainFile}").existsCaseSensitive()) {
+                    erros.add("O projecto não contém o ficheiro ${mainFile} na pasta 'src/${mainLanguage}/${packageName}/${mainFile}'")
+                } 
+            }
+        } else {
+            if (!File(projectFolder, "src/${packageName}/${mainFile}").existsCaseSensitive()) {
+                erros.add("O projecto não contém o ficheiro ${mainFile} na pasta 'src/${packageName}'")
+            }
         }
 
         if (File(projectFolder, "src")
@@ -436,7 +455,7 @@ class UploadController(
     }
 
     /**
-     * NEW: Removed previous version to make one that works for all compilers
+     * NEW: Removed previous version to make one that works for all languages and compilers 
      * Transforms a student's submission/code from its original structure to a structure that respects the standard for the compiler (Maven or Gradle)
      * expected format.
      * @param projectFolder is a file
@@ -447,12 +466,14 @@ class UploadController(
     private fun standardizeFolder(projectFolder: File, submission: Submission, assignment: Assignment, teacherRebuild: Boolean = false): File {
         val newProjectFolder = assignmentTeacherFiles.getProjectFolderAsFile(submission, teacherRebuild)
 
+        //Delete submission folder recursively
         newProjectFolder.deleteRecursively()
 
         //NEW: Android files are in Kotlin so we start by checking with JAVA
         val folder = if (assignment.language == Language.JAVA) "java" else "kotlin"
 
         // first copy the project files submitted by the students
+        //NEW: Gradle standardization should be added here (NOT SURE HOW THAT WOULD HELP) to src/main/*language*/folder
         FileUtils.copyDirectory(File(projectFolder, "src"), File(newProjectFolder, "src/main/${folder}")) {
             it.isDirectory || (it.isFile() && !it.name.startsWith("Test")) // exclude TestXXX classes
         }

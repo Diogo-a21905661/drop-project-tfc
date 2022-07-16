@@ -41,6 +41,9 @@ public class GradleInvoker {
 
     var securityManagerEnabled = true
 
+    @Value("\${dropProject.maven.repository}")
+    val repository : String = ""
+
     fun disableSecurity() {
         securityManagerEnabled = false
     }
@@ -58,26 +61,23 @@ public class GradleInvoker {
      */
     fun run(projectFolder: File, principalName: String?, assignment: Assignment) : Result {
         //Check if repository already exists
-        /* 
         if (!File(repository).exists()) {
             val success = File(repository).mkdirs()
             if (!success) {
                 LOG.error("Couldn't create the repository folder: $repository")
             }
         }
-        */
+
+        //Setup variables for output
+        var exitLines = ArrayList<String>() //Output lines from invoker
+        var exitCode = 0 //0 is good, everything else is bad (1)
 
         try {
             val connection = GradleConnector.newConnector().forProjectDirectory(projectFolder).connect()
             val build: BuildLauncher = connection.newBuild()
 
-            //Check which language is being used and select tasks to run
-            if (assignment.language == Language.KOTLIN) {
-                build.forTasks("clean", "compileKotlin", "compileTestKotlin")
-            } else {
-                //Testing if task "test" works (test, compileTestJava)
-                build.forTasks("clean", "compileJava", "test")
-            }
+            //Select tasks to run
+            build.forTasks("clean", "build", "test")
 
             //include some build arguments:
             /*
@@ -90,15 +90,10 @@ public class GradleInvoker {
             */
 
             //if you want to listen to the progress events: 
-            /*
+            //TO DO: Still need to compile submission tests against actual assignment tests
             build.addProgressListener(ProgressListener {
                 LOG.info("progress ${it.description}")
-            })
-            */
-
-            //if you want to listen to the progress events: 
-            build.addProgressListener(ProgressListener {
-                LOG.info("progress ${it.description}")
+                exitLines.add(it.description)
             })
 
             //kick the build off
@@ -106,12 +101,10 @@ public class GradleInvoker {
         } catch (ex: Exception) {
             ex.printStackTrace()
             LOG.error(ex.localizedMessage)
+            exitCode = 1
         }
 
-        //Have to see what results came out of assignment
-        LOG.info("Finished gradle invoker")
-
         //Return result
-        return Result(resultCode = 200)
+        return Result(resultCode = exitCode, outputLines = exitLines)
     }
 }

@@ -166,7 +166,6 @@ class AssignmentController(
 
         var assignment: Assignment
         if (!assignmentForm.editMode) {   // create
-
             if (assignmentForm.acl?.split(",")?.contains(principal.realName()) == true) {
                 LOG.warn("Assignment ACL should not include the owner")
                 bindingResult.rejectValue("acl", "acl.includeOwner",
@@ -211,6 +210,10 @@ class AssignmentController(
                 }
             }
 
+            //Log message indication successful creation
+            LOG.info("Created assignment ${assignmentForm.assignmentId} and added it to repository.")
+
+            //Create assignment
             val newAssignment = createAssignmentBasedOnForm(assignmentForm, principal)
             assignmentRepository.save(newAssignment)
             assignment = newAssignment
@@ -245,7 +248,6 @@ class AssignmentController(
             // TODO: check again for assignment integrity
 
             assignmentService.updateAssignment(existingAssignment, assignmentForm)
-
             assignmentRepository.save(existingAssignment)
 
             assignment = existingAssignment
@@ -344,6 +346,7 @@ class AssignmentController(
             throw IllegalAccessError("Assignments can only be accessed by their owner or authorized teachers")
         }
 
+        //Get assignment parameters (including tests)
         model["assignment"] = assignment
         model["assignees"] = assignees
         model["acl"] = acl
@@ -354,6 +357,7 @@ class AssignmentController(
         } else {
             "Good job! Assignment has no errors and is ready to be activated."
         }
+        LOG.info("Assignment ${assignmentId} Parameters have been reached.")
 
         // check if it has been setup for git connection and if there is a repository folder
         if (assignment.gitRepositoryPrivKey != null && File(assignmentsRootLocation, assignment.gitRepositoryFolder).exists()) {

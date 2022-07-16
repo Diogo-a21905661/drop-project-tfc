@@ -60,27 +60,26 @@ class BuildReportBuilder {
     /**
      * Builds a BuildReport
      *
-     * @param mavenOutputLines is a List of String with the output of a Maven build process
+     * @param outputLines is a List of String with the output of a Maven build process
      * @param mavenizedProjectFolder is a String
      * @param assignment is an [Assignment]
      * @param submission is a [Submission]
      *
      * @return a [BuildReport]
      */
-    fun build(mavenOutputLines: List<String>,
-              mavenizedProjectFolder: String,
+    fun build(outputLines: List<String>,
+              mavenizedProjectFolder: String,   
               assignment: Assignment,
               submission: Submission? = null) : BuildReport {
 
-                LOG.info("Started Build report builder for ${assignment.id}");  
-
+        //Get report from test execution (Submission)
         val junitReportFromDB : List<JUnitReport>? =
-                if (submission != null) jUnitReportRepository.findBySubmissionId(submission.id)
-                else null
+                if (submission != null) jUnitReportRepository.findBySubmissionId(submission.id) else null
+        LOG.info("JUNIT Report From DB: ${junitReportFromDB}")
 
         val jUnitResults =
                 if (junitReportFromDB != null && !junitReportFromDB.isEmpty()) {
-                    // LOG.info("Got jUnit Report from DB")
+                    LOG.info("Got jUnit Report from DB (submission)")
                     junitReportFromDB
                             .map { it -> junitResultsParser.parseXml(it.xmlReport) }
                             .toList()
@@ -97,14 +96,17 @@ class BuildReportBuilder {
                         emptyList<JUnitResults>()
                     }
                 }
+        LOG.info("JUNIT Results: ${jUnitResults}")
 
+        //Submission (report from Jacoco)
         val jacocoReportFromDB : List<JacocoReport>? =
                 if (submission != null) jacocoReportRepository.findBySubmissionId(submission.id)
                 else null
 
+        //Submission results?
         val jacocoResults =
             if (jacocoReportFromDB != null && !jacocoReportFromDB.isEmpty()) {
-                // LOG.info("Got Jacoco Report from DB")
+                LOG.info("Got Jacoco Report from DB (submission)")
                 jacocoReportFromDB
                         .map { it -> jacocoResultsParser.parseCsv(it.csvReport) }
                         .toList()
@@ -113,16 +115,15 @@ class BuildReportBuilder {
                 emptyList<JacocoResults>()
             }
 
+        //Test methods of assignment (in repository)
         val assignmentTestMethods =
                 if (submission != null) {
                     assignmentTestMethodRepository.findByAssignmentId(assignment.id)
                 } else {
                     emptyList()
                 }
-
-                LOG.info("Finished Build report builder for ${assignment.id}");  
-
-        return BuildReport(mavenOutputLines, mavenizedProjectFolder, assignment, jUnitResults, jacocoResults,
+        LOG.info("Assignment Test Methods: ${jUnitResults}")
+        return BuildReport(outputLines, mavenizedProjectFolder, assignment, jUnitResults, jacocoResults,
                 assignmentTestMethods)
     }
 }

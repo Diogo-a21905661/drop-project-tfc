@@ -65,7 +65,8 @@ class AssignmentValidatorGradle : AssignmentValidator() {
             report.add(Info(InfoType.INFO, "Assignment has a build.gradle"))
         }
        
-        /* 
+        /*
+        //TODO: Check build.gradle file for plugins used
         //For maven surefire plugin, not sure if it works with gradle
 
         //Get reader for model

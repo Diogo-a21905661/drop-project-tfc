@@ -251,7 +251,7 @@
                aria-expanded="false" aria-controls="collapseFullReport" title="Click to expand/collapse">Full report (only visible to teachers)</a>
         </div>
         <div class="panel-body" id="collapseFullReport">
-            <pre th:text="${buildReport.mavenOutput()}"></pre>
+            <pre th:text="${buildReport.getOutput()}"></pre>
         </div>
     </div>
 </div>

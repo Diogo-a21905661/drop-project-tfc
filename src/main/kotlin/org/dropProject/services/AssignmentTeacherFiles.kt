@@ -34,6 +34,7 @@ import org.springframework.context.support.ResourceBundleMessageSource
 import java.io.File
 import java.io.FileNotFoundException
 import java.security.Principal
+import org.slf4j.LoggerFactory
 import java.util.*
 
 /**
@@ -47,6 +48,8 @@ class AssignmentTeacherFiles(val buildWorker: BuildWorker,
                              val applicationContext: ApplicationContext,
                              val i18n: MessageSource
 ) {
+
+    val LOG = LoggerFactory.getLogger(this.javaClass.name)
 
     @Value("\${assignments.rootLocation}")
     val assignmentsRootLocation : String = ""
@@ -67,7 +70,6 @@ class AssignmentTeacherFiles(val buildWorker: BuildWorker,
     }
 
     fun copyTeacherFilesTo(assignment: Assignment, mavenizedProjectFolder: File) {
-
         // TODO: should change artifactId in pom.xml with the group-id...
 
         val rootFolder = File(assignmentsRootLocation, assignment.gitRepositoryFolder)
@@ -89,7 +91,6 @@ class AssignmentTeacherFiles(val buildWorker: BuildWorker,
      * @return a String
      */
     fun buildPackageTree(packageName: String?, language: Language, hasStudentTests: Boolean = false): String {
-
         val packages = packageName.orEmpty().split(".")
         val mainFile = if (language == Language.JAVA) "Main.java" else "Main.kt"
 
@@ -112,9 +113,8 @@ class AssignmentTeacherFiles(val buildWorker: BuildWorker,
         return packagesTree
     }
 
-    // check that the project files associated with this assignment are valid
+    // check that the project files associated with this assignment are valid (used in Assignment)
     fun checkAssignmentFiles(assignment: Assignment, principal: Principal?): List<AssignmentValidator.Info> {
-
         val assignmentFolder = File(assignmentsRootLocation, assignment.gitRepositoryFolder)
 
         //Use the validator depending on the compiler
@@ -136,13 +136,16 @@ class AssignmentTeacherFiles(val buildWorker: BuildWorker,
 
         // run mvn clean test on the assignment
         val buildReport = buildWorker.checkAssignment(assignmentFolder, assignment, principal?.name)
+
+        //Check for timeout
         if (buildReport == null) {
             report.add(AssignmentValidator.Info(AssignmentValidator.InfoType.ERROR,
                     "Assignment checking (run tests) was aborted by timeout! Why is it taking so long to run?"))
             return report
         }
 
-        val buildReportDB = buildReportRepository.save(BuildReport(buildReport = buildReport.mavenOutput()))
+        //Check for compiler used
+        val buildReportDB: BuildReport = buildReportRepository.save(BuildReport(buildReport = buildReport.getOutput()))
         assignment.buildReportId = buildReportDB.id
 
         // let's update the test methods associated with this assignment
@@ -162,7 +165,7 @@ class AssignmentTeacherFiles(val buildWorker: BuildWorker,
 
         if (!buildReport.checkstyleErrors().isEmpty()) {
             report.add(AssignmentValidator.Info(AssignmentValidator.InfoType.ERROR,
-             "Assignment has checkstyle errors."))
+                "Assignment has checkstyle errors."))
             return report
         }
 
@@ -172,7 +175,7 @@ class AssignmentTeacherFiles(val buildWorker: BuildWorker,
                     "<pre>${buildReport.jUnitErrors()}</pre>"))
             return report
         }
-
+        
         return report
     }
 

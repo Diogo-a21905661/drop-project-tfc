@@ -57,7 +57,7 @@ class MavenInvoker {
     var showOutput = false
 
     /**
-     * Runs and project using Maven. This function executes the compilation and testing of a submitted project.
+     * Runs a project using Maven. This function executes the compilation and testing of a submitted project.
      *
      * @param mavenizedProjectFolder is a File containing the project's files
      * @param principalName is a String
@@ -142,16 +142,12 @@ class MavenInvoker {
                     LOG.error("Maven execution too long. Aborting...")
                     return Result(resultCode = result.exitCode, outputLines = outputLines, expiredByTimeout = true)
                 } else {
-                    LOG.error("Error: ${result.executionException}")
+                    LOG.error("Error: ${result.executionException}")    
                 }
             } else {
                 LOG.warn("Maven invoker ended with result code ${result.exitCode}")
             }
         }
-
-        //Must replicate these results
-        LOG.info("Result Code is {}", result.exitCode)
-        LOG.info("Output Lines is {}", outputLines)
 
         return Result(resultCode = result.exitCode, outputLines = outputLines)
     }
