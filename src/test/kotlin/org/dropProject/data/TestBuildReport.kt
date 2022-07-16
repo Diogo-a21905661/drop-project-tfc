@@ -65,7 +65,7 @@ class TestBuildReport {
 
         val mavenOutputLines = resourceLoader.getResource("file:src/test/sampleMavenOutputs/fatalError1.txt").file.readLines()
 
-        val buildReport = buildReportBuilder.build(outputLines,
+        val buildReport = buildReportBuilder.build(mavenOutputLines,
                 "/Users/pedroalves/projects/Lusofona/DropProject/DropProject/mavenized-projects-test/projectSampleJavaAssignmentNOK-mavenized",
                 dummyJavaAssignment)
 
