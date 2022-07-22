@@ -106,9 +106,6 @@ class BuildWorker(
             //Run invoker of compiler (clean, compile, test)
             result = gradleInvoker.run(projectFolder, realPrincipalName, assignment)
 
-            //Get assignment tests based on result
-            getTestsFromOutput(result)
-
             //Create build report for Gradle
             buildGradle(result, assignment, submission, projectFolder, realPrincipalName, dontChangeStatusDate, rebuildByTeacher)
         }
@@ -121,10 +118,6 @@ class BuildWorker(
         }
 
         submissionRepository.save(submission)
-    }
-
-    private fun getTestsFromOutput(result: Result) {
-        LOG.info("Output is: ${result.outputLines}")
     }
 
     //Create build report for Maven
@@ -281,6 +274,8 @@ class BuildWorker(
     //Create build report for Gradle
     private fun buildGradle(result: Result, assignment: Assignment, submission: Submission, 
                         projectFolder: File, realPrincipalName: String?, dontChangeStatusDate: Boolean,  rebuildByTeacher: Boolean) {
+        LOG.info("Build report started for Gradle.")
+       
         // check result for errors (expired, too much output)
         when {
             result.expiredByTimeout -> submission.setStatus(SubmissionStatus.ABORTED_BY_TIMEOUT,
@@ -393,6 +388,9 @@ class BuildWorker(
      * @return a [BuildReport] or null
      */
     fun checkAssignment(assignmentFolder: File, assignment: Assignment, principalName: String?) : BuildReport? {
+        LOG.info("Compiler used for assignment ${assignment.id} is ${assignment.compiler}.")
+        LOG.info("Programming language used for assignment ${assignment.id} is ${assignment.language}.")
+        
         if (assignment.compiler == Compiler.MAVEN) {
             val mavenResult = mavenInvoker.run(assignmentFolder, principalName, assignment.maxMemoryMb)
             if (!mavenResult.expiredByTimeout) {

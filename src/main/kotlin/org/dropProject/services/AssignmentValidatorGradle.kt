@@ -58,13 +58,14 @@ class AssignmentValidatorGradle : AssignmentValidator() {
         //Check if file exists
         if (!gradleFile.exists()) {
             report.add(Info(InfoType.ERROR, "Assignment must have a build.gradle file.",
-            "Check <a href=\"https://github.com/palves-ulht/sampleJavaAssignment\">" +
-                    "https://github.com/palves-ulht/sampleJavaAssignment</a> for an example"))
+            "Check <a href=\"https://github.com/Diogo-a21905661/test-kotlin-gradle-assignment\">" +
+                    "https://github.com/Diogo-a21905661/test-kotlin-gradle-assignment</a> for an example"))
             return
         } else {
             report.add(Info(InfoType.INFO, "Assignment has a build.gradle"))
-        }
-       
+        } 
+
+
         /*
         //TODO: Check build.gradle file for plugins used
         //For maven surefire plugin, not sure if it works with gradle
